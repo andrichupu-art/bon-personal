@@ -1668,6 +1668,58 @@
             if (error) console.error('Gagal menghapus vendor dari Supabase:', error);
         }
 
+        // ==== Confetti Celebration ====
+        function showConfetti() {
+            var colors = ['#FF6B6B', '#4ECDC4', '#667eea', '#f5576c', '#43e97b', '#fee140'];
+            for (var i = 0; i < 40; i++) {
+                (function() {
+                    var piece = document.createElement('div');
+                    piece.className = 'confetti';
+                    piece.style.left = Math.random() * 100 + 'vw';
+                    piece.style.top = '-20px';
+                    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                    var duration = 2 + Math.random() * 1.5;
+                    piece.style.animation = 'confetti-fall ' + duration + 's ease-in forwards';
+                    document.body.appendChild(piece);
+                    setTimeout(function() { piece.remove(); }, duration * 1000);
+                })();
+            }
+        }
+
+        // ==== Loader ====
+        function showLoader() {
+            var overlay = document.getElementById('loaderOverlay');
+            if (overlay) overlay.classList.add('show');
+        }
+
+        function hideLoader() {
+            var overlay = document.getElementById('loaderOverlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+
+        // ==== Notification ====
+        function showNotification(message, type) {
+            type = type || 'info';
+            var container = document.getElementById('notificationContainer');
+            if (!container) return;
+
+            var icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            var icon = icons[type] || icons.info;
+
+            var el = document.createElement('div');
+            el.className = 'notification ' + type;
+            el.innerHTML = '<i class="fas ' + icon + '"></i><span>' + message + '</span>';
+            container.appendChild(el);
+
+            setTimeout(function() {
+                el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-10px)';
+                setTimeout(function() { el.remove(); }, 300);
+            }, 3000);
+        }
+
         // ==== Settings Toggles (Notifikasi / Mode Gelap / Auto Backup) ====
         function toggleSetting(el) {
             el.classList.toggle('active');
@@ -2028,6 +2080,136 @@
             renderRekap();
             updateHomeStats();
             renderHomeRecent();
+        }
+
+        // ==== Download Bon as Image ====
+        async function downloadBon(sessionId) {
+            var session = sessions.find(function(s) { return s.id === sessionId; });
+            if (!session) { showNotification('Sesi tidak ditemukan!', 'error'); return; }
+
+            var totalPaid = session.payments ? session.payments.reduce(function(sum, p) { return sum + p.amount; }, 0) : 0;
+            var remaining = session.sisa - totalPaid;
+
+            var itemsHtml = session.items.map(function(item) {
+                return '<tr><td style="padding:6px 0;font-size:13px;">' + item.nama + '</td><td style="padding:6px 0;font-size:13px;text-align:center;">' + item.qty + '</td><td style="padding:6px 0;font-size:13px;text-align:right;">' + formatRupiah(item.subtotal) + '</td></tr>';
+            }).join('');
+
+            var preview = document.getElementById('bonPreview');
+            preview.innerHTML =
+                '<div style="text-align:center;margin-bottom:20px;">' +
+                    '<h2 style="margin:0;color:#2D3436;">BON KU</h2>' +
+                    '<div style="font-size:12px;color:#888;">Bon &amp; Hutang Vendor</div>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;font-size:13px;color:#2D3436;margin-bottom:10px;">' +
+                    '<span><strong>' + session.vendor + '</strong></span>' +
+                    '<span>' + new Date(session.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + '</span>' +
+                '</div>' +
+                '<table style="width:100%;border-collapse:collapse;border-top:1px dashed #ccc;border-bottom:1px dashed #ccc;margin-bottom:10px;">' +
+                    '<tbody>' + itemsHtml + '</tbody>' +
+                '</table>' +
+                '<div style="font-size:13px;color:#2D3436;">' +
+                    '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Total</span><span>' + formatRupiah(session.total) + '</span></div>' +
+                    '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>DP</span><span>' + formatRupiah(session.dp) + '</span></div>' +
+                    '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Pinjaman</span><span>' + formatRupiah(session.pinjaman) + '</span></div>' +
+                    '<div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Sudah Dibayar</span><span>' + formatRupiah(totalPaid) + '</span></div>' +
+                    '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #eee;font-weight:700;font-size:15px;"><span>Sisa</span><span>' + formatRupiah(remaining) + '</span></div>' +
+                '</div>' +
+                '<div style="text-align:center;margin-top:20px;font-size:11px;color:#aaa;">Dicetak ' + new Date().toLocaleString('id-ID') + '</div>';
+
+            showLoader();
+            try {
+                var canvas = await html2canvas(preview, { backgroundColor: '#ffffff', scale: 2 });
+                var link = document.createElement('a');
+                link.download = 'Bon_' + session.vendor.replace(/\s+/g, '_') + '_' + session.id + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showNotification('Bon berhasil diunduh!', 'success');
+            } catch (err) {
+                console.error('Gagal membuat gambar bon:', err);
+                showNotification('Gagal mengunduh bon!', 'error');
+            } finally {
+                hideLoader();
+                preview.innerHTML = '';
+            }
+        }
+
+        // ==== Data Management: Export / Import / Reset ====
+        function exportData() {
+            var payload = { sessions: sessions, vendors: vendors, exportedAt: new Date().toISOString() };
+            var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'bonku_backup_' + new Date().toISOString().split('T')[0] + '.json';
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showNotification('Data berhasil diexport!', 'success');
+        }
+
+        async function importData(input) {
+            var file = input.files && input.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    var payload = JSON.parse(e.target.result);
+                    if (!payload.sessions || !payload.vendors) throw new Error('Format file tidak valid');
+                    if (!confirm('Import akan menggabungkan data dari file dengan data saat ini. Lanjutkan?')) { input.value = ''; return; }
+
+                    showLoader();
+                    for (var i = 0; i < payload.vendors.length; i++) {
+                        if (!vendors.includes(payload.vendors[i])) {
+                            vendors.push(payload.vendors[i]);
+                            await addVendorToSupabase(payload.vendors[i]);
+                        }
+                    }
+                    for (var j = 0; j < payload.sessions.length; j++) {
+                        var incoming = payload.sessions[j];
+                        var existingIdx = sessions.findIndex(function(s) { return s.id === incoming.id; });
+                        if (existingIdx >= 0) { sessions[existingIdx] = incoming; } else { sessions.push(incoming); }
+                        await syncSessionToSupabase(incoming);
+                    }
+                    hideLoader();
+                    renderSettingsVendors();
+                    renderRekap();
+                    updateHomeStats();
+                    renderHomeRecent();
+                    showNotification('Data berhasil diimport!', 'success');
+                } catch (err) {
+                    hideLoader();
+                    console.error('Gagal import data:', err);
+                    showNotification('Gagal import: file tidak valid!', 'error');
+                }
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        async function resetAllData() {
+            if (!confirm('Semua data bon dan vendor akan dihapus permanen. Yakin?')) return;
+            if (!confirm('Tindakan ini TIDAK BISA dibatalkan. Hapus semua data sekarang?')) return;
+
+            showLoader();
+            try {
+                for (var i = 0; i < sessions.length; i++) {
+                    await supabaseClient.from('bonku_sessions').delete().eq('id', sessions[i].id);
+                }
+                for (var j = 0; j < vendors.length; j++) {
+                    await deleteVendorFromSupabase(vendors[j]);
+                }
+                sessions = [];
+                vendors = [];
+                renderSettingsVendors();
+                renderRekap();
+                updateHomeStats();
+                renderHomeRecent();
+                showNotification('Semua data berhasil dihapus!', 'success');
+            } catch (err) {
+                console.error('Gagal menghapus semua data:', err);
+                showNotification('Gagal menghapus data!', 'error');
+            } finally {
+                hideLoader();
+            }
         }
 
         async function markLunas(sessionId) {
