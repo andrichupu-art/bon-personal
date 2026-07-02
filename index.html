@@ -32,6 +32,9 @@
             --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
             --gradient-5: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             --gradient-6: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --border-soft: rgba(0,0,0,0.08);
             --glass: rgba(255,255,255,0.25);
             --shadow: 0 8px 32px rgba(0,0,0,0.15);
         }
@@ -49,7 +52,19 @@
             overflow-x: hidden;
             min-height: 100vh;
             position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
         }
+
+        body.dark-mode {
+            --light: #14141c;
+            --dark: #eceef2;
+            --card-bg: #1f1f2b;
+            --input-bg: #262633;
+            --border-soft: rgba(255,255,255,0.08);
+        }
+
+        body.dark-mode .custom-input::placeholder { color: #777; }
+        body.dark-mode ::-webkit-scrollbar-track { background: #1a1a24; }
 
         .bg-animated {
             position: fixed;
@@ -233,11 +248,11 @@
         .custom-input {
             width: 100%;
             padding: 14px 18px;
-            border: 2px solid rgba(0,0,0,0.08);
+            border: 2px solid var(--border-soft);
             border-radius: 16px;
             font-size: 15px;
             font-weight: 500;
-            background: white;
+            background: var(--input-bg);
             transition: all 0.3s ease;
             outline: none;
             color: var(--dark);
@@ -255,11 +270,11 @@
         .custom-select {
             width: 100%;
             padding: 14px 18px;
-            border: 2px solid rgba(0,0,0,0.08);
+            border: 2px solid var(--border-soft);
             border-radius: 16px;
             font-size: 15px;
             font-weight: 500;
-            background: white;
+            background: var(--input-bg);
             appearance: none;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -293,7 +308,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: white;
+            background: var(--card-bg);
             border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             z-index: 1000;
@@ -328,7 +343,7 @@
         .dropdown-item:last-child { border-bottom: none; }
 
         .item-row {
-            background: white;
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 18px;
             margin-bottom: 15px;
@@ -456,7 +471,7 @@
         }
 
         .summary-box {
-            background: white;
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 16px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.06);
@@ -541,7 +556,7 @@
         .btn-download:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5); }
 
         .session-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 24px;
             padding: 20px;
             margin-bottom: 15px;
@@ -692,7 +707,7 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .modal-content {
-            background: white;
+            background: var(--card-bg);
             width: 100%;
             max-width: 480px;
             border-radius: 30px 30px 0 0;
@@ -925,7 +940,7 @@
         }
 
         .stat-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 18px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.06);
@@ -962,9 +977,9 @@
 
         .filter-btn {
             padding: 8px 16px;
-            border: 2px solid rgba(0,0,0,0.08);
+            border: 2px solid var(--border-soft);
             border-radius: 50px;
-            background: white;
+            background: var(--card-bg);
             font-weight: 600;
             font-size: 13px;
             cursor: pointer;
@@ -1007,7 +1022,7 @@
         .payment-history-item:last-child { border-bottom: none; }
 
         .settings-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 24px;
             padding: 20px;
             margin-bottom: 15px;
@@ -1648,7 +1663,116 @@
             if (error) console.error('Gagal menyimpan vendor ke Supabase:', error);
         }
 
+        async function deleteVendorFromSupabase(nama) {
+            const { error } = await supabaseClient.from('bonku_vendors').delete().eq('nama', nama);
+            if (error) console.error('Gagal menghapus vendor dari Supabase:', error);
+        }
+
+        // ==== Settings Toggles (Notifikasi / Mode Gelap / Auto Backup) ====
+        function toggleSetting(el) {
+            el.classList.toggle('active');
+            var isActive = el.classList.contains('active');
+
+            if (el.id === 'darkToggle') {
+                document.body.classList.toggle('dark-mode', isActive);
+                localStorage.setItem('bonku_darkMode', isActive ? '1' : '0');
+            } else if (el.id === 'notifToggle') {
+                localStorage.setItem('bonku_notif', isActive ? '1' : '0');
+            } else if (el.id === 'backupToggle') {
+                localStorage.setItem('bonku_autoBackup', isActive ? '1' : '0');
+            }
+        }
+
+        function restoreSettingsPreferences() {
+            var darkOn = localStorage.getItem('bonku_darkMode') === '1';
+            var notifOn = localStorage.getItem('bonku_notif');
+            var backupOn = localStorage.getItem('bonku_autoBackup');
+
+            document.body.classList.toggle('dark-mode', darkOn);
+            var darkToggle = document.getElementById('darkToggle');
+            if (darkToggle) darkToggle.classList.toggle('active', darkOn);
+
+            var notifToggle = document.getElementById('notifToggle');
+            if (notifToggle && notifOn !== null) notifToggle.classList.toggle('active', notifOn === '1');
+
+            var backupToggle = document.getElementById('backupToggle');
+            if (backupToggle && backupOn !== null) backupToggle.classList.toggle('active', backupOn === '1');
+        }
+
+        // ==== Vendor: Add Modal ====
+        function showAddVendorModal() {
+            document.getElementById('newVendorName').value = '';
+            document.getElementById('addVendorModal').classList.add('show');
+        }
+
+        function closeAddVendorModal() {
+            document.getElementById('addVendorModal').classList.remove('show');
+        }
+
+        async function addNewVendor() {
+            var nama = document.getElementById('newVendorName').value.trim();
+            if (!nama) { showNotification('Nama vendor harus diisi!', 'error'); return; }
+            if (vendors.includes(nama)) { showNotification('Vendor sudah ada!', 'error'); return; }
+            vendors.push(nama);
+            await addVendorToSupabase(nama);
+            renderSettingsVendors();
+            closeAddVendorModal();
+            showNotification('Vendor berhasil ditambahkan!', 'success');
+        }
+
+        async function deleteVendor(nama) {
+            if (!confirm('Hapus vendor "' + nama + '"?')) return;
+            vendors = vendors.filter(function(v) { return v !== nama; });
+            await deleteVendorFromSupabase(nama);
+            renderSettingsVendors();
+            showNotification('Vendor berhasil dihapus!', 'success');
+        }
+
+        // ==== Vendor: Settings List ====
+        function renderSettingsVendors() {
+            var container = document.getElementById('settingsVendorList');
+            if (!container) return;
+            if (!vendors.length) {
+                container.innerHTML = '<div style="text-align:center;color:#888;padding:20px;font-size:13px;">Belum ada vendor</div>';
+                return;
+            }
+            container.innerHTML = vendors.map(function(v) {
+                return '<div class="vendor-list-item"><div class="vendor-name-text"><i class="fas fa-store"></i>' + v + '</div><button class="btn-delete-vendor" onclick="deleteVendor(\'' + v.replace(/'/g, "\\'") + '\')"><i class="fas fa-trash"></i></button></div>';
+            }).join('');
+        }
+
+        // ==== Vendor: Autocomplete Dropdown on Input Form ====
+        function showVendorDropdown() {
+            filterVendors();
+        }
+
+        function filterVendors() {
+            var input = document.getElementById('vendorInput');
+            var dropdown = document.getElementById('vendorDropdown');
+            var query = input.value.trim().toLowerCase();
+            var matches = vendors.filter(function(v) { return v.toLowerCase().indexOf(query) !== -1; });
+            if (!matches.length) { dropdown.classList.remove('show'); dropdown.innerHTML = ''; return; }
+            dropdown.innerHTML = matches.map(function(v) {
+                return '<div class="dropdown-item" onclick="selectVendor(\'' + v.replace(/'/g, "\\'") + '\')">' + v + '</div>';
+            }).join('');
+            dropdown.classList.add('show');
+        }
+
+        function selectVendor(nama) {
+            document.getElementById('vendorInput').value = nama;
+            document.getElementById('vendorDropdown').classList.remove('show');
+        }
+
+        document.addEventListener('click', function(e) {
+            var input = document.getElementById('vendorInput');
+            var dropdown = document.getElementById('vendorDropdown');
+            if (dropdown && input && !input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', async function() {
+            restoreSettingsPreferences();
             document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
             addItem();
             await loadDataFromSupabase();
