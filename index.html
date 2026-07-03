@@ -344,64 +344,124 @@
 
         .item-row {
             background: var(--card-bg);
-            border-radius: 20px;
-            padding: 18px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
+            border-radius: 14px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
             position: relative;
-            animation: slideIn 0.4s ease;
         }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .item-row:hover { border-color: var(--secondary); transform: translateX(5px); }
 
         .item-row .item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .item-row .item-number {
             background: var(--gradient-3);
             color: white;
-            width: 32px;
-            height: 32px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .item-row .remove-item {
-            background: var(--gradient-2);
-            color: white;
+            background: transparent;
+            color: #ff6b6b;
             border: none;
-            width: 32px;
-            height: 32px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
             font-size: 14px;
         }
 
-        .item-row .remove-item:hover { transform: rotate(90deg) scale(1.1); }
-
         .item-row .item-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .item-view-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .item-view-badge {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--gradient-6);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .item-view-content { flex: 1; min-width: 0; }
+
+        .item-view-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 6px;
+        }
+
+        .item-view-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        .item-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(78, 205, 196, 0.12);
+            color: var(--secondary);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 9px;
+            border-radius: 20px;
+        }
+
+        .item-tag.price { background: rgba(255, 107, 107, 0.1); color: var(--primary); }
+
+        .item-view-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+        .btn-edit-item, .btn-delete-item {
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        .btn-edit-item { background: rgba(255, 230, 109, 0.35); color: #b5860a; }
+        .btn-delete-item { background: rgba(255, 107, 107, 0.15); color: var(--primary); }
+
+        .items-empty {
+            text-align: center;
+            padding: 20px 10px;
+            color: #999;
+            font-size: 13px;
         }
 
         .btn-add-item {
@@ -462,6 +522,12 @@
         }
 
         .summary-card .amount { font-size: 28px; font-weight: 800; }
+
+        .dp-pinjaman-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
 
         .summary-grid {
             display: grid;
@@ -1383,7 +1449,7 @@
                         <div id="vendorDropdown" class="dropdown-menu"></div>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="display:none">
                     <label class="form-label"><i class="fas fa-calendar-alt"></i> Tanggal</label>
                     <input type="date" id="tanggalInput" class="custom-input">
                 </div>
@@ -1391,7 +1457,7 @@
 
             <div id="itemsContainer"></div>
 
-            <button class="btn-add-item" onclick="addItem()">
+            <button class="btn-add-item" onclick="openItemModal()">
                 <i class="fas fa-plus"></i> Tambah Item
             </button>
 
@@ -1400,25 +1466,16 @@
                 <div class="amount" id="totalTagihan">Rp 0</div>
             </div>
 
-            <div class="summary-grid">
-                <div class="summary-box dp">
-                    <div class="label"><i class="fas fa-hand-holding-usd"></i> DP</div>
-                    <div class="value" id="totalDP">Rp 0</div>
-                </div>
-                <div class="summary-box loan">
-                    <div class="label"><i class="fas fa-money-bill-wave"></i> Pinjaman</div>
-                    <div class="value" id="totalPinjaman">Rp 0</div>
-                </div>
-            </div>
-
             <div class="glass-card">
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-hand-holding-usd"></i> DP (Down Payment)</label>
-                    <input type="number" id="dpInput" class="custom-input" placeholder="0" oninput="calculateSummary()">
-                </div>
-                <div class="form-group">
-                    <label class="form-label"><i class="fas fa-money-bill-wave"></i> Pinjaman ke Vendor</label>
-                    <input type="number" id="pinjamanInput" class="custom-input" placeholder="0" oninput="calculateSummary()">
+                <div class="dp-pinjaman-grid">
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label"><i class="fas fa-hand-holding-usd"></i> DP (Down Payment)</label>
+                        <input type="number" id="dpInput" class="custom-input" placeholder="0" oninput="calculateSummary()" onwheel="this.blur()">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label"><i class="fas fa-money-bill-wave"></i> Pinjaman ke Vendor</label>
+                        <input type="number" id="pinjamanInput" class="custom-input" placeholder="0" oninput="calculateSummary()" onwheel="this.blur()">
+                    </div>
                 </div>
             </div>
 
@@ -1531,10 +1588,35 @@
             </div>
             <div class="form-group">
                 <label class="form-label"><i class="fas fa-money-bill"></i> Jumlah Bayar</label>
-                <input type="number" id="paymentAmount" class="custom-input" placeholder="Masukkan jumlah pembayaran">
+                <input type="number" id="paymentAmount" class="custom-input" placeholder="Masukkan jumlah pembayaran" onwheel="this.blur()">
             </div>
             <button class="btn-save" onclick="processPayment()">
                 <i class="fas fa-check-circle"></i> Konfirmasi Pembayaran
+            </button>
+        </div>
+    </div>
+
+    <!-- Item Modal -->
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-box"></i> <span id="itemModalTitle">Tambah Item</span></h2>
+                <button class="modal-close" onclick="closeItemModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-tag"></i> Nama Barang/Jasa</label>
+                <input type="text" id="itemNamaInput" class="custom-input" placeholder="Contoh: Kain Katun">
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-cubes"></i> QTY</label>
+                <input type="number" id="itemQtyInput" class="custom-input" placeholder="1" min="1" value="1" onwheel="this.blur()">
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="fas fa-money-bill"></i> Harga</label>
+                <input type="number" id="itemHargaInput" class="custom-input" placeholder="0" onwheel="this.blur()">
+            </div>
+            <button class="btn-save" onclick="saveItemModal()">
+                <i class="fas fa-check-circle"></i> Simpan Item
             </button>
         </div>
     </div>
@@ -1827,7 +1909,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             restoreSettingsPreferences();
             document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
-            addItem();
+            renderItems();
             await loadDataFromSupabase();
             updateHomeStats();
             renderHomeRecent();
@@ -1851,38 +1933,84 @@
             if (tab === 'setting') { renderSettingsVendors(); }
         }
 
-        function addItem() {
-            itemCount++;
-            var container = document.getElementById('itemsContainer');
-            var itemRow = document.createElement('div');
-            itemRow.className = 'item-row';
-            itemRow.id = 'item-' + itemCount;
-            itemRow.innerHTML = '<div class="item-header"><div class="item-number">' + itemCount + '</div><button class="remove-item" onclick="removeItem(' + itemCount + ')" title="Hapus Item"><i class="fas fa-trash-alt"></i></button></div><div class="item-grid"><div class="form-group" style="margin-bottom:0"><input type="text" class="custom-input item-nama" placeholder="Nama Barang/Jasa" oninput="calculateSummary()"></div><div class="form-group" style="margin-bottom:0"><input type="number" class="custom-input item-qty" placeholder="QTY" min="1" value="1" oninput="calculateSummary()"></div><div class="form-group" style="margin-bottom:0"><input type="number" class="custom-input item-harga" placeholder="Harga" oninput="calculateSummary()"></div></div>';
-            container.appendChild(itemRow);
-            setTimeout(function() { itemRow.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+        var bonItems = [];
+        var editingItemId = null;
+
+        function openItemModal(id) {
+            editingItemId = id || null;
+            var titleEl = document.getElementById('itemModalTitle');
+            if (editingItemId) {
+                var item = bonItems.find(function(i) { return i.id === editingItemId; });
+                titleEl.textContent = 'Edit Item';
+                document.getElementById('itemNamaInput').value = item ? item.nama : '';
+                document.getElementById('itemQtyInput').value = item ? item.qty : 1;
+                document.getElementById('itemHargaInput').value = item ? item.harga : '';
+            } else {
+                titleEl.textContent = 'Tambah Item';
+                document.getElementById('itemNamaInput').value = '';
+                document.getElementById('itemQtyInput').value = 1;
+                document.getElementById('itemHargaInput').value = '';
+            }
+            document.getElementById('itemModal').classList.add('show');
+            setTimeout(function() { document.getElementById('itemNamaInput').focus(); }, 300);
+        }
+
+        function closeItemModal() {
+            document.getElementById('itemModal').classList.remove('show');
+            editingItemId = null;
+        }
+
+        function saveItemModal() {
+            var nama = document.getElementById('itemNamaInput').value.trim();
+            var qty = parseFloat(document.getElementById('itemQtyInput').value) || 0;
+            var harga = parseFloat(document.getElementById('itemHargaInput').value) || 0;
+
+            if (!nama) { showNotification('Nama barang/jasa harus diisi!', 'error'); return; }
+            if (harga <= 0) { showNotification('Harga harus diisi!', 'error'); return; }
+
+            if (editingItemId) {
+                var item = bonItems.find(function(i) { return i.id === editingItemId; });
+                if (item) { item.nama = nama; item.qty = qty; item.harga = harga; }
+            } else {
+                itemCount++;
+                bonItems.push({ id: itemCount, nama: nama, qty: qty, harga: harga });
+            }
+
+            renderItems();
             calculateSummary();
+            closeItemModal();
         }
 
         function removeItem(id) {
-            var item = document.getElementById('item-' + id);
-            if (item) {
-                item.style.animation = 'slideIn 0.3s ease reverse';
-                setTimeout(function() { item.remove(); calculateSummary(); }, 300);
+            bonItems = bonItems.filter(function(i) { return i.id !== id; });
+            renderItems();
+            calculateSummary();
+        }
+
+        function renderItems() {
+            var container = document.getElementById('itemsContainer');
+            if (bonItems.length === 0) {
+                container.innerHTML = '<div class="items-empty">Belum ada item, tambahkan di bawah</div>';
+                return;
             }
+            container.innerHTML = bonItems.map(function(item, idx) {
+                return '<div class="item-row"><div class="item-view-row">' +
+                    '<div class="item-view-badge">' + (idx + 1) + '</div>' +
+                    '<div class="item-view-content"><div class="item-view-title">' + item.nama + '</div>' +
+                    '<div class="item-view-tags">' +
+                    '<span class="item-tag"><i class="fas fa-cubes"></i> ' + item.qty + ' PCS</span>' +
+                    '<span class="item-tag price"><i class="fas fa-tag"></i> ' + formatRupiah(item.qty * item.harga) + '</span>' +
+                    '</div></div>' +
+                    '<div class="item-view-actions">' +
+                    '<button class="btn-edit-item" onclick="openItemModal(' + item.id + ')" title="Edit"><i class="fas fa-pen"></i></button>' +
+                    '<button class="btn-delete-item" onclick="removeItem(' + item.id + ')" title="Hapus"><i class="fas fa-trash-alt"></i></button>' +
+                    '</div></div></div>';
+            }).join('');
         }
 
         function calculateSummary() {
-            var total = 0;
-            document.querySelectorAll('.item-row').forEach(function(row) {
-                var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-                var harga = parseFloat(row.querySelector('.item-harga').value) || 0;
-                total += qty * harga;
-            });
-            var dp = parseFloat(document.getElementById('dpInput').value) || 0;
-            var pinjaman = parseFloat(document.getElementById('pinjamanInput').value) || 0;
+            var total = bonItems.reduce(function(sum, item) { return sum + (item.qty * item.harga); }, 0);
             document.getElementById('totalTagihan').textContent = formatRupiah(total);
-            document.getElementById('totalDP').textContent = formatRupiah(dp);
-            document.getElementById('totalPinjaman').textContent = formatRupiah(pinjaman);
         }
 
         function formatRupiah(angka) {
@@ -1894,16 +2022,10 @@
             var tanggal = document.getElementById('tanggalInput').value;
             if (!vendor) { showNotification('Nama vendor harus diisi!', 'error'); return; }
 
-            var items = [];
-            var hasItem = false;
-            document.querySelectorAll('.item-row').forEach(function(row) {
-                var nama = row.querySelector('.item-nama').value.trim();
-                var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-                var harga = parseFloat(row.querySelector('.item-harga').value) || 0;
-                if (nama && harga > 0) { items.push({ nama: nama, qty: qty, harga: harga, subtotal: qty * harga }); hasItem = true; }
+            if (bonItems.length === 0) { showNotification('Minimal isi 1 item!', 'error'); return; }
+            var items = bonItems.map(function(item) {
+                return { nama: item.nama, qty: item.qty, harga: item.harga, subtotal: item.qty * item.harga };
             });
-
-            if (!hasItem) { showNotification('Minimal isi 1 item!', 'error'); return; }
 
             var dp = parseFloat(document.getElementById('dpInput').value) || 0;
             var pinjaman = parseFloat(document.getElementById('pinjamanInput').value) || 0;
@@ -1958,9 +2080,9 @@
             document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
             document.getElementById('dpInput').value = '';
             document.getElementById('pinjamanInput').value = '';
-            document.getElementById('itemsContainer').innerHTML = '';
+            bonItems = [];
             itemCount = 0;
-            addItem();
+            renderItems();
             calculateSummary();
         }
 
