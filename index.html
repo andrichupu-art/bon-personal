@@ -974,7 +974,7 @@
             position: fixed;
             top: -9999px;
             left: -9999px;
-            width: 420px;
+            width: 440px;
             background: #ffffff;
             font-family: 'Poppins', sans-serif;
             overflow: hidden;
@@ -2216,46 +2216,47 @@
             var itemsHtml = session.items.map(function(item, idx) {
                 var rowBg = idx % 2 === 0 ? '#ffffff' : '#faf9fc';
                 return '<tr style="background:' + rowBg + ';">' +
-                    '<td style="padding:10px 8px;font-size:13px;color:#2D3436;font-weight:600;border-bottom:1px solid #f0f0f4;">' + item.nama + '</td>' +
-                    '<td style="padding:10px 8px;font-size:12px;text-align:center;color:#888;border-bottom:1px solid #f0f0f4;">' + item.qty + '</td>' +
-                    '<td style="padding:10px 8px;font-size:12px;text-align:right;color:#888;border-bottom:1px solid #f0f0f4;">' + formatRupiah(item.harga) + '</td>' +
-                    '<td style="padding:10px 8px;font-size:13px;text-align:right;color:#2D3436;font-weight:700;border-bottom:1px solid #f0f0f4;">' + formatRupiah(item.subtotal) + '</td>' +
+                    '<td style="padding:8px 6px;font-size:11.5px;color:#2D3436;font-weight:600;border-bottom:1px solid #f0f0f4;">' + item.nama + '</td>' +
+                    '<td style="padding:8px 6px;font-size:10.5px;text-align:center;color:#888;border-bottom:1px solid #f0f0f4;white-space:nowrap;">' + item.qty + '</td>' +
+                    '<td style="padding:8px 6px;font-size:10.5px;text-align:right;color:#888;border-bottom:1px solid #f0f0f4;white-space:nowrap;">' + formatRupiah(item.harga) + '</td>' +
+                    '<td style="padding:8px 6px;font-size:11.5px;text-align:right;color:#2D3436;font-weight:700;border-bottom:1px solid #f0f0f4;white-space:nowrap;">' + formatRupiah(item.subtotal) + '</td>' +
                 '</tr>';
             }).join('');
 
             var preview = document.getElementById('bonPreview');
             preview.innerHTML =
-                '<div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:28px 24px 60px;text-align:center;position:relative;">' +
-                    '<img src="' + LOGO_BASE64 + '" alt="Logo" style="max-width:190px;height:auto;margin:0 auto;display:block;filter:brightness(0) invert(1);">' +
-                    '<div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:10px;letter-spacing:1px;text-transform:uppercase;font-weight:600;">Bon &amp; Hutang Vendor</div>' +
+                '<div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:26px 24px 56px;text-align:center;position:relative;">' +
+                    '<img src="' + LOGO_BASE64 + '" alt="Logo" style="max-width:170px;height:auto;margin:0 auto;display:block;filter:brightness(0) invert(1);">' +
+                    '<div style="font-size:11px;color:rgba(255,255,255,0.85);margin-top:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600;">Bon &amp; Hutang Vendor</div>' +
                 '</div>' +
-                '<div style="margin:-40px 20px 0;background:#ffffff;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.12);padding:22px 20px;position:relative;">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+                '<div style="margin:-38px 18px 0;background:#ffffff;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.12);padding:20px 16px;position:relative;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
                         '<div>' +
-                            '<div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Vendor</div>' +
-                            '<div style="font-size:16px;color:#2D3436;font-weight:800;">' + session.vendor + '</div>' +
+                            '<div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Vendor</div>' +
+                            '<div style="font-size:14px;color:#2D3436;font-weight:800;">' + session.vendor + '</div>' +
                         '</div>' +
                         '<div style="text-align:right;">' +
-                            '<div style="font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Tanggal</div>' +
-                            '<div style="font-size:13px;color:#2D3436;font-weight:600;">' + new Date(session.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + '</div>' +
+                            '<div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Tanggal</div>' +
+                            '<div style="font-size:12px;color:#2D3436;font-weight:600;">' + new Date(session.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + '</div>' +
                         '</div>' +
                     '</div>' +
-                    '<table style="width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden;">' +
+                    '<table style="width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden;table-layout:fixed;">' +
+                        '<colgroup><col style="width:37%;"><col style="width:13%;"><col style="width:23%;"><col style="width:27%;"></colgroup>' +
                         '<thead><tr style="background:#f7f6fb;">' +
-                            '<th style="padding:8px;font-size:10px;text-align:left;color:#8b8b9e;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Item</th>' +
-                            '<th style="padding:8px;font-size:10px;text-align:center;color:#8b8b9e;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Qty</th>' +
-                            '<th style="padding:8px;font-size:10px;text-align:right;color:#8b8b9e;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Satuan</th>' +
-                            '<th style="padding:8px;font-size:10px;text-align:right;color:#8b8b9e;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Subtotal</th>' +
+                            '<th style="padding:7px 6px;font-size:9px;text-align:left;color:#8b8b9e;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">Item</th>' +
+                            '<th style="padding:7px 6px;font-size:9px;text-align:center;color:#8b8b9e;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">Qty</th>' +
+                            '<th style="padding:7px 6px;font-size:9px;text-align:right;color:#8b8b9e;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">Satuan</th>' +
+                            '<th style="padding:7px 6px;font-size:9px;text-align:right;color:#8b8b9e;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">Subtotal</th>' +
                         '</tr></thead>' +
                         '<tbody>' + itemsHtml + '</tbody>' +
                     '</table>' +
-                    '<div style="margin-top:16px;padding-top:14px;border-top:1px dashed #ddd;">' +
-                        '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#666;"><span>Total</span><span style="font-weight:600;color:#2D3436;">' + formatRupiah(session.total) + '</span></div>' +
-                        '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:#666;"><span>DP</span><span style="font-weight:600;color:#2D3436;">' + formatRupiah(session.dp) + '</span></div>' +
+                    '<div style="margin-top:14px;padding-top:12px;border-top:1px dashed #ddd;">' +
+                        '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#666;"><span>Total</span><span style="font-weight:600;color:#2D3436;">' + formatRupiah(session.total) + '</span></div>' +
+                        '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#666;"><span>DP</span><span style="font-weight:600;color:#2D3436;">' + formatRupiah(session.dp) + '</span></div>' +
                     '</div>' +
-                    '<div style="margin-top:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:14px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 16px rgba(102,126,234,0.35);">' +
-                        '<span style="color:rgba(255,255,255,0.9);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Sisa</span>' +
-                        '<span style="color:#ffffff;font-size:19px;font-weight:800;">' + formatRupiah(remaining) + '</span>' +
+                    '<div style="margin-top:10px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 6px 16px rgba(102,126,234,0.35);">' +
+                        '<span style="color:rgba(255,255,255,0.9);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Sisa</span>' +
+                        '<span style="color:#ffffff;font-size:17px;font-weight:800;">' + formatRupiah(remaining) + '</span>' +
                     '</div>' +
                 '</div>' +
                 '<div style="text-align:center;margin:18px 0 24px;font-size:11px;color:#bbb;">Dicetak ' + new Date().toLocaleString('id-ID') + '</div>';
