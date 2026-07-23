@@ -1,13 +1,14 @@
 {
-  "name": "BonKu - Aplikasi Bon & Hutang",
+  "name": "BonKu — Buku Hutang Vendor",
   "short_name": "BonKu",
-  "description": "Aplikasi Bon & Hutang Vendor",
+  "description": "BonKu — Buku Hutang & Bon Vendor",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#F7F7F7",
-  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "background_color": "#F2ECDD",
+  "theme_color": "#22304A",
+  "lang": "id",
   "icons": [
     {
       "src": "icon-192.png",
@@ -22,7 +23,13 @@
       "purpose": "any"
     },
     {
-      "src": "icon-512-maskable.png",
+      "src": "icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
