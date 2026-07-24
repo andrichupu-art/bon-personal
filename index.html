@@ -494,7 +494,7 @@ body.dark-mode .install-banner i{color:var(--gold);}
     <div class="paper-card">
       <div class="form-group" style="position:relative;">
         <label class="form-label"><i class="fas fa-store"></i>Vendor</label>
-        <input type="text" id="vendorInput" class="custom-input" placeholder="Ketik atau pilih vendor..." autocomplete="off" oninput="filterVendors()" onfocus="showVendorDropdown()">
+        <input type="text" id="vendorInput" class="custom-input" placeholder="Ketik atau pilih vendor..." autocomplete="off" inputmode="none" oninput="filterVendors()" onfocus="showVendorDropdown()">
         <div id="vendorDropdown" class="dropdown-menu"></div>
       </div>
     </div>
@@ -627,11 +627,41 @@ body.dark-mode .install-banner i{color:var(--gold);}
       </div>
       <div class="form-group">
         <label class="form-label"><i class="fas fa-money-bill"></i>Harga</label>
-        <input type="number" id="itemHargaInput" class="custom-input mono-input" placeholder="0" onwheel="this.blur()" oninput="updateItemSubtotalPreview()">
+        <div class="custom-input mono-input" id="itemHargaDisplay" style="cursor:pointer;" onclick="openItemHargaModal()">0</div>
+        <input type="hidden" id="itemHargaInput" value="">
       </div>
     </div>
     <div class="summary-box grand" style="margin-bottom:16px;"><div class="label">Subtotal</div><div class="value" id="itemSubtotalPreview">Rp 0</div></div>
     <button class="btn-primary" onclick="saveItemModal()"><i class="fas fa-check"></i> Simpan Item</button>
+  </div>
+</div>
+
+<!-- ============ SHEET: Harga Item Modal ============ -->
+<div class="sheet-overlay" id="itemHargaModalOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title"><i class="fas fa-money-bill"></i>Harga Barang<button class="numpad-close title-close" onclick="closeItemHargaModal()"><i class="fas fa-xmark"></i></button></div>
+    <div class="numpad-box">
+      <div class="numpad-header">
+        <label class="form-label"><i class="fas fa-money-bill"></i>Harga per Satuan</label>
+      </div>
+      <div class="numpad-display active" id="itemHargaNumpadDisplay">Rp 0</div>
+      <div class="numpad-grid">
+        <button type="button" class="numpad-btn" onclick="numpadPress('1')">1</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('2')">2</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('3')">3</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('4')">4</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('5')">5</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('6')">6</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('7')">7</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('8')">8</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('9')">9</button>
+        <button type="button" class="numpad-btn func" onclick="numpadPress('clear')">C</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('0')">0</button>
+        <button type="button" class="numpad-btn func" onclick="numpadPress('back')"><i class="fas fa-delete-left"></i></button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveItemHargaModal()"><i class="fas fa-check"></i> Simpan</button>
   </div>
 </div>
 
@@ -641,9 +671,25 @@ body.dark-mode .install-banner i{color:var(--gold);}
     <div class="sheet-handle"></div>
     <div class="sheet-title"><i class="fas fa-hand-holding-dollar"></i>Bayar Cicilan<button class="numpad-close title-close" onclick="closePaymentModal()"><i class="fas fa-xmark"></i></button></div>
     <div class="summary-box grand" style="margin-bottom:16px;"><div class="label">Sisa Tagihan</div><div class="value" id="modalRemaining">Rp 0</div></div>
-    <div class="form-group">
-      <label class="form-label"><i class="fas fa-money-bill-wave"></i>Jumlah Bayar</label>
-      <input type="number" id="paymentAmount" class="custom-input mono-input" placeholder="Masukkan jumlah pembayaran" onwheel="this.blur()">
+    <div class="numpad-box">
+      <div class="numpad-header">
+        <label class="form-label"><i class="fas fa-money-bill-wave"></i>Jumlah Bayar</label>
+      </div>
+      <div class="numpad-display active" id="paymentNumpadDisplay">Rp 0</div>
+      <div class="numpad-grid">
+        <button type="button" class="numpad-btn" onclick="numpadPress('1')">1</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('2')">2</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('3')">3</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('4')">4</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('5')">5</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('6')">6</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('7')">7</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('8')">8</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('9')">9</button>
+        <button type="button" class="numpad-btn func" onclick="numpadPress('clear')">C</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('0')">0</button>
+        <button type="button" class="numpad-btn func" onclick="numpadPress('back')"><i class="fas fa-delete-left"></i></button>
+      </div>
     </div>
     <button class="btn-primary" onclick="processPayment()"><i class="fas fa-check"></i> Konfirmasi Pembayaran</button>
   </div>
@@ -1056,6 +1102,7 @@ function renderVendorDropdownList(dd, list) {
 }
 function selectVendor(nama) {
   document.getElementById('vendorInput').value = nama;
+  document.getElementById('vendorInput').blur();
   document.getElementById('vendorDropdown').classList.remove('show');
   haptic();
   checkActiveSessionForCurrentVendor();
@@ -1122,9 +1169,14 @@ function pickItemSuggestion(it) {
   document.getElementById('itemNamaInput').value = it.nama;
   document.getElementById('itemHargaInput').value = it.harga;
   document.getElementById('itemSatuanInput').value = it.satuan;
+  syncItemHargaDisplay();
   document.getElementById('itemSuggestDropdown').classList.remove('show');
   updateItemSubtotalPreview();
   haptic();
+}
+function syncItemHargaDisplay() {
+  const harga = parseFloat(document.getElementById('itemHargaInput').value) || 0;
+  document.getElementById('itemHargaDisplay').textContent = harga ? formatRupiah(harga).replace('Rp ', '') : '0';
 }
 
 function openItemModal(id) {
@@ -1135,6 +1187,7 @@ function openItemModal(id) {
   document.getElementById('itemQtyInput').value = item ? item.qty : 1;
   document.getElementById('itemSatuanInput').value = item ? (item.satuan || 'Pcs') : 'Pcs';
   document.getElementById('itemHargaInput').value = item ? item.harga : '';
+  syncItemHargaDisplay();
   updateItemSubtotalPreview();
   document.getElementById('itemModalOverlay').classList.add('show');
   setTimeout(function () { document.getElementById('itemNamaInput').focus(); }, 250);
@@ -1209,13 +1262,18 @@ function calculateSummary() {
   document.getElementById('sumSisa').textContent = formatRupiah(sisaBaru);
 }
 
-// ---------- Custom numpad (DP & Pinjaman) ----------
+// ---------- Custom numpad (DP, Pinjaman, Harga Item, Bayar) ----------
 let numpadBuffer = '';
-let numpadTarget = null; // 'dp' | 'pinjaman'
+let numpadTarget = null; // 'dp' | 'pinjaman' | 'itemHarga' | 'payment'
+const numpadDisplayMap = {
+  dp: 'dpNumpadDisplay',
+  pinjaman: 'pinjamanNumpadDisplay',
+  itemHarga: 'itemHargaNumpadDisplay',
+  payment: 'paymentNumpadDisplay'
+};
 
 function numpadUpdateDisplay() {
-  const displayId = numpadTarget === 'dp' ? 'dpNumpadDisplay' : 'pinjamanNumpadDisplay';
-  const el = document.getElementById(displayId);
+  const el = document.getElementById(numpadDisplayMap[numpadTarget]);
   if (!el) return;
   el.textContent = formatRupiah(parseFloat(numpadBuffer) || 0);
 }
@@ -1266,6 +1324,27 @@ function savePinjamanModal() {
   closePinjamanModal();
   haptic(12);
 }
+
+// ---------- Harga Item modal ----------
+function openItemHargaModal() {
+  numpadTarget = 'itemHarga';
+  const current = document.getElementById('itemHargaInput').value;
+  numpadBuffer = current ? String(current) : '';
+  numpadUpdateDisplay();
+  document.getElementById('itemHargaModalOverlay').classList.add('show');
+}
+function closeItemHargaModal() {
+  document.getElementById('itemHargaModalOverlay').classList.remove('show');
+}
+function saveItemHargaModal() {
+  const harga = parseFloat(numpadBuffer) || 0;
+  document.getElementById('itemHargaInput').value = harga;
+  syncItemHargaDisplay();
+  updateItemSubtotalPreview();
+  closeItemHargaModal();
+  haptic(12);
+}
+
 
 // ---------- SAVE BON — logika akumulasi sesi per vendor ----------
 async function saveBon() {
@@ -1472,12 +1551,14 @@ function openPaymentModal(sessionId) {
   const paid = (session.payments || []).reduce(function (s, p) { return s + p.amount; }, 0);
   const remaining = Math.max(0, session.sisa - paid);
   document.getElementById('modalRemaining').textContent = formatRupiah(remaining);
-  document.getElementById('paymentAmount').value = '';
+  numpadTarget = 'payment';
+  numpadBuffer = '';
+  numpadUpdateDisplay();
   document.getElementById('paymentModalOverlay').classList.add('show');
 }
 function closePaymentModal() { document.getElementById('paymentModalOverlay').classList.remove('show'); }
 async function processPayment() {
-  const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+  const amount = parseFloat(numpadBuffer) || 0;
   if (amount <= 0) { showNotification('Masukkan jumlah pembayaran yang valid!', 'error'); return; }
   const session = sessions.find(function (s) { return s.id === currentPaymentSessionId; });
   if (!session) return;
