@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
 <meta name="theme-color" content="#22304A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -499,7 +499,7 @@ body.dark-mode .install-banner i{color:var(--gold);}
     <div class="paper-card">
       <div class="form-group" style="position:relative;">
         <label class="form-label"><i class="fas fa-store"></i>Vendor</label>
-        <input type="text" id="vendorInput" class="custom-input" placeholder="Ketik atau pilih vendor..." autocomplete="off" inputmode="none" oninput="filterVendors()" onfocus="showVendorDropdown()">
+        <input type="text" id="vendorInput" class="custom-input" placeholder="Ketik atau pilih vendor..." autocomplete="off" inputmode="none" oninput="forceUpperCaseInput(this);filterVendors()" onfocus="showVendorDropdown()">
         <div id="vendorDropdown" class="dropdown-menu"></div>
       </div>
     </div>
@@ -616,23 +616,23 @@ body.dark-mode .install-banner i{color:var(--gold);}
     <div class="sheet-title"><span id="itemModalTitle"><i class="fas fa-basket-shopping"></i>Tambah Item</span><button class="numpad-close title-close" onclick="closeItemModal()"><i class="fas fa-xmark"></i></button></div>
     <div class="form-group" style="position:relative;">
       <label class="form-label"><i class="fas fa-tag"></i>Nama Barang</label>
-      <input type="text" id="itemNamaInput" class="custom-input" placeholder="Contoh: Kain Katun" autocomplete="off" oninput="showItemSuggestions()" onfocus="showItemSuggestions()">
+      <input type="text" id="itemNamaInput" class="custom-input" placeholder="Contoh: Kain Katun" autocomplete="off" oninput="forceTitleCaseInput(this);showItemSuggestions()" onfocus="showItemSuggestions()">
       <div id="itemSuggestDropdown" class="dropdown-menu"></div>
     </div>
     <div class="input-row3">
       <div class="form-group">
         <label class="form-label"><i class="fas fa-cubes"></i>Qty</label>
-        <input type="number" id="itemQtyInput" class="custom-input mono-input" placeholder="1" min="0.01" value="1" step="any" onwheel="this.blur()" oninput="updateItemSubtotalPreview()">
+        <input type="number" id="itemQtyInput" class="custom-input mono-input" placeholder="1" min="0.01" value="1" step="any" onwheel="this.blur()" oninput="updateItemSubtotalPreview()" onfocus="document.getElementById('itemSuggestDropdown').classList.remove('show')">
       </div>
       <div class="form-group">
         <label class="form-label"><i class="fas fa-ruler"></i>Satuan</label>
-        <select id="itemSatuanInput" class="custom-select">
+        <select id="itemSatuanInput" class="custom-select" onfocus="document.getElementById('itemSuggestDropdown').classList.remove('show')">
           <option>Pcs</option><option>Kg</option><option>Gram</option><option>Meter</option><option>Roll</option><option>Lusin</option><option>Box</option><option>Liter</option><option>Lainnya</option>
         </select>
       </div>
       <div class="form-group">
         <label class="form-label"><i class="fas fa-money-bill"></i>Harga</label>
-        <div class="custom-input mono-input" id="itemHargaDisplay" style="cursor:pointer;" onclick="openItemHargaModal()">0</div>
+        <div class="custom-input mono-input" id="itemHargaDisplay" style="cursor:pointer;" onclick="document.getElementById('itemSuggestDropdown').classList.remove('show');openItemHargaModal()">0</div>
         <input type="hidden" id="itemHargaInput" value="">
       </div>
     </div>
@@ -765,7 +765,7 @@ body.dark-mode .install-banner i{color:var(--gold);}
     <div class="sheet-title"><i class="fas fa-store"></i>Vendor Baru<button class="numpad-close title-close" onclick="closeAddVendorModal()"><i class="fas fa-xmark"></i></button></div>
     <div class="form-group">
       <label class="form-label"><i class="fas fa-signature"></i>Nama Vendor</label>
-      <input type="text" id="newVendorName" class="custom-input" placeholder="Masukkan nama vendor">
+      <input type="text" id="newVendorName" class="custom-input" placeholder="Masukkan nama vendor" oninput="forceUpperCaseInput(this)">
     </div>
     <button class="btn-primary" onclick="addNewVendor()"><i class="fas fa-check"></i> Simpan Vendor</button>
   </div>
@@ -1099,6 +1099,24 @@ function installPWA() {
 }
 function dismissInstall() { document.getElementById('installBanner').classList.remove('show'); }
 
+// ---------- Auto text formatting (vendor = UPPERCASE, lainnya = Title Case) ----------
+function forceUpperCaseInput(input) {
+  const start = input.selectionStart, end = input.selectionEnd;
+  const upper = input.value.toUpperCase();
+  if (upper !== input.value) {
+    input.value = upper;
+    input.setSelectionRange(start, end);
+  }
+}
+function forceTitleCaseInput(input) {
+  const start = input.selectionStart, end = input.selectionEnd;
+  const titled = input.value.toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); });
+  if (titled !== input.value) {
+    input.value = titled;
+    input.setSelectionRange(start, end);
+  }
+}
+
 // ---------- Vendor autocomplete (Buat Bon) ----------
 function showVendorDropdown() {
   const dd = document.getElementById('vendorDropdown');
@@ -1207,7 +1225,7 @@ function openItemModal(id) {
   syncItemHargaDisplay();
   updateItemSubtotalPreview();
   document.getElementById('itemModalOverlay').classList.add('show');
-  setTimeout(function () { document.getElementById('itemNamaInput').focus(); }, 250);
+  if (!item) setTimeout(function () { document.getElementById('itemNamaInput').focus(); }, 250);
 }
 function closeItemModal() {
   document.getElementById('itemModalOverlay').classList.remove('show');
@@ -1723,10 +1741,10 @@ async function downloadBon(sessionId) {
 
   const itemsHtml = (session.items || []).map(function (item) {
     return '<tr>' +
-      '<td style="padding:8px 6px;font-size:11.5px;color:#22304A;font-weight:600;border-bottom:1px solid #eee;">' + item.nama + '</td>' +
-      '<td style="padding:8px 6px;font-size:10.5px;text-align:center;color:#888;border-bottom:1px solid #eee;white-space:nowrap;">' + item.qty + ' ' + (item.satuan || '') + '</td>' +
-      '<td style="padding:8px 6px;font-size:10.5px;text-align:right;color:#888;border-bottom:1px solid #eee;white-space:nowrap;">' + formatRupiah(item.harga) + '</td>' +
-      '<td style="padding:8px 6px;font-size:11px;text-align:right;color:#22304A;font-weight:700;border-bottom:1px solid #eee;">' + formatRupiah(item.subtotal) + '</td>' +
+      '<td style="padding:7px 5px;font-size:9.5px;line-height:1.3;color:#22304A;font-weight:600;border-bottom:1px solid #eee;">' + item.nama + '</td>' +
+      '<td style="padding:7px 4px;font-size:9px;text-align:center;color:#888;border-bottom:1px solid #eee;white-space:nowrap;">' + item.qty + ' ' + (item.satuan || '') + '</td>' +
+      '<td style="padding:7px 4px;font-size:9px;text-align:right;color:#888;border-bottom:1px solid #eee;white-space:nowrap;">' + formatRupiah(item.harga) + '</td>' +
+      '<td style="padding:7px 5px;font-size:9.5px;text-align:right;color:#22304A;font-weight:700;border-bottom:1px solid #eee;white-space:nowrap;">' + formatRupiah(item.subtotal) + '</td>' +
       '</tr>';
   }).join('');
 
@@ -1742,8 +1760,8 @@ async function downloadBon(sessionId) {
     '<div style="text-align:right;"><div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Tanggal</div><div style="font-size:11.5px;color:#22304A;font-weight:600;">' + formatDateID(session.tanggal) + '</div></div>' +
     '</div>' +
     '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
-    '<colgroup><col style="width:36%;"><col style="width:20%;"><col style="width:20%;"><col style="width:24%;"></colgroup>' +
-    '<thead><tr style="background:#f7f6f0;"><th style="padding:6px;font-size:9px;text-align:left;color:#8b8b9e;font-weight:700;">Item</th><th style="padding:6px;font-size:9px;color:#8b8b9e;font-weight:700;">Qty</th><th style="padding:6px;font-size:9px;text-align:right;color:#8b8b9e;font-weight:700;">Harga</th><th style="padding:6px;font-size:9px;text-align:right;color:#8b8b9e;font-weight:700;">Subtotal</th></tr></thead>' +
+    '<colgroup><col style="width:38%;"><col style="width:17%;"><col style="width:20%;"><col style="width:25%;"></colgroup>' +
+    '<thead><tr style="background:#f7f6f0;"><th style="padding:5px;font-size:8px;text-align:left;color:#8b8b9e;font-weight:700;">Item</th><th style="padding:5px;font-size:8px;color:#8b8b9e;font-weight:700;">Qty</th><th style="padding:5px;font-size:8px;text-align:right;color:#8b8b9e;font-weight:700;">Harga</th><th style="padding:5px;font-size:8px;text-align:right;color:#8b8b9e;font-weight:700;">Subtotal</th></tr></thead>' +
     '<tbody>' + itemsHtml + '</tbody></table>' +
     '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ddd;">' +
     '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Total</span><span style="font-weight:700;color:#22304A;">' + formatRupiah(session.total) + '</span></div>' +
