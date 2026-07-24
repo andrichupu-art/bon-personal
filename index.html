@@ -215,6 +215,13 @@ body::before{
 .dropdown-item{padding:11px 15px;cursor:pointer;font-size:13.5px;font-weight:600;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;color:var(--ink);}
 .dropdown-item small{font-family:var(--font-mono);font-weight:400;color:var(--ink-faint);font-size:11px;}
 .dropdown-item:hover,.dropdown-item:active{background:var(--gold-soft);}
+.numpad-display{font-family:var(--font-mono);font-size:26px;font-weight:800;color:var(--ink);background:var(--paper-card2,var(--paper-card));border:1.5px solid var(--line);border-radius:14px;padding:16px 16px;text-align:right;margin-top:6px;letter-spacing:.3px;transition:border-color .15s;}
+.numpad-display.active{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft);}
+.numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 6px;}
+.numpad-btn{background:var(--paper-card2,var(--paper-card));border:1px solid var(--line);border-radius:14px;padding:15px 0;font-size:19px;font-weight:700;color:var(--ink);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:background .12s,transform .08s;font-family:var(--font-mono);}
+.numpad-btn:active{background:var(--gold-soft);transform:scale(0.95);}
+.numpad-btn.func{color:var(--brick);font-size:16px;}
+.numpad-btn.func i{pointer-events:none;}
 .dropdown-item:last-child{border-bottom:none;}
 .dropdown-empty{padding:14px 15px;font-size:12.5px;color:var(--ink-faint);text-align:center;}
 
@@ -522,8 +529,8 @@ body.dark-mode .install-banner i{color:var(--gold);}
     <div class="total-strip"><div><div class="lbl">Total Item Baru</div><div class="val" id="totalTagihan">Rp 0</div></div><i class="fas fa-basket-shopping" style="font-size:22px;opacity:.5;"></i></div>
 
     <div class="summary-grid">
-      <div class="summary-box dp" onclick="openDpPinjamanModal()" style="cursor:pointer;"><div class="label"><i class="fas fa-pen" style="font-size:9px;margin-right:4px;opacity:.6;"></i>DP</div><div class="value" id="sumDp">Rp 0</div></div>
-      <div class="summary-box loan" onclick="openDpPinjamanModal()" style="cursor:pointer;"><div class="label"><i class="fas fa-pen" style="font-size:9px;margin-right:4px;opacity:.6;"></i>Pinjaman</div><div class="value" id="sumPinjaman">Rp 0</div></div>
+      <div class="summary-box dp" onclick="openDpModal()" style="cursor:pointer;"><div class="label"><i class="fas fa-pen" style="font-size:9px;margin-right:4px;opacity:.6;"></i>DP</div><div class="value" id="sumDp">Rp 0</div></div>
+      <div class="summary-box loan" onclick="openPinjamanModal()" style="cursor:pointer;"><div class="label"><i class="fas fa-pen" style="font-size:9px;margin-right:4px;opacity:.6;"></i>Pinjaman</div><div class="value" id="sumPinjaman">Rp 0</div></div>
       <div class="summary-box grand"><div class="label">Sisa Bon (setelah simpan)</div><div class="value" id="sumSisa">Rp 0</div></div>
     </div>
 
@@ -667,23 +674,59 @@ body.dark-mode .install-banner i{color:var(--gold);}
   </div>
 </div>
 
-<!-- ============ SHEET: DP & Pinjaman Modal ============ -->
-<div class="sheet-overlay" id="dpPinjamanModalOverlay">
+<!-- ============ SHEET: DP Modal ============ -->
+<div class="sheet-overlay" id="dpModalOverlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <button class="sheet-close" onclick="closeDpPinjamanModal()"><i class="fas fa-xmark"></i></button>
-    <div class="sheet-title"><i class="fas fa-hand-holding-dollar"></i>DP &amp; Pinjaman</div>
-    <div class="input-row">
-      <div class="form-group">
-        <label class="form-label"><i class="fas fa-hand-holding-dollar"></i>DP</label>
-        <input type="number" id="dpInputModal" class="custom-input mono-input" placeholder="0" onwheel="this.blur()">
-      </div>
-      <div class="form-group">
-        <label class="form-label"><i class="fas fa-money-bill-transfer"></i>Pinjaman</label>
-        <input type="number" id="pinjamanInputModal" class="custom-input mono-input" placeholder="0" onwheel="this.blur()">
-      </div>
+    <button class="sheet-close" onclick="closeDpModal()"><i class="fas fa-xmark"></i></button>
+    <div class="sheet-title"><i class="fas fa-hand-holding-dollar"></i>DP</div>
+    <div class="form-group">
+      <label class="form-label"><i class="fas fa-hand-holding-dollar"></i>Jumlah DP</label>
+      <div class="numpad-display active" id="dpNumpadDisplay">Rp 0</div>
     </div>
-    <button class="btn-primary" onclick="saveDpPinjamanModal()"><i class="fas fa-check"></i> Simpan</button>
+    <div class="numpad-grid">
+      <button type="button" class="numpad-btn" onclick="numpadPress('1')">1</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('2')">2</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('3')">3</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('4')">4</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('5')">5</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('6')">6</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('7')">7</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('8')">8</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('9')">9</button>
+      <button type="button" class="numpad-btn func" onclick="numpadPress('clear')">C</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('0')">0</button>
+      <button type="button" class="numpad-btn func" onclick="numpadPress('back')"><i class="fas fa-delete-left"></i></button>
+    </div>
+    <button class="btn-primary" onclick="saveDpModal()"><i class="fas fa-check"></i> Simpan</button>
+  </div>
+</div>
+
+<!-- ============ SHEET: Pinjaman Modal ============ -->
+<div class="sheet-overlay" id="pinjamanModalOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <button class="sheet-close" onclick="closePinjamanModal()"><i class="fas fa-xmark"></i></button>
+    <div class="sheet-title"><i class="fas fa-money-bill-transfer"></i>Pinjaman</div>
+    <div class="form-group">
+      <label class="form-label"><i class="fas fa-money-bill-transfer"></i>Jumlah Pinjaman</label>
+      <div class="numpad-display active" id="pinjamanNumpadDisplay">Rp 0</div>
+    </div>
+    <div class="numpad-grid">
+      <button type="button" class="numpad-btn" onclick="numpadPress('1')">1</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('2')">2</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('3')">3</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('4')">4</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('5')">5</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('6')">6</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('7')">7</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('8')">8</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('9')">9</button>
+      <button type="button" class="numpad-btn func" onclick="numpadPress('clear')">C</button>
+      <button type="button" class="numpad-btn" onclick="numpadPress('0')">0</button>
+      <button type="button" class="numpad-btn func" onclick="numpadPress('back')"><i class="fas fa-delete-left"></i></button>
+    </div>
+    <button class="btn-primary" onclick="savePinjamanModal()"><i class="fas fa-check"></i> Simpan</button>
   </div>
 </div>
 
@@ -1208,21 +1251,61 @@ function calculateSummary() {
   document.getElementById('sumSisa').textContent = formatRupiah(sisaBaru);
 }
 
-// ---------- DP & Pinjaman modal ----------
-function openDpPinjamanModal() {
-  document.getElementById('dpInputModal').value = bonDp || '';
-  document.getElementById('pinjamanInputModal').value = bonPinjaman || '';
-  document.getElementById('dpPinjamanModalOverlay').classList.add('show');
-  setTimeout(function () { document.getElementById('dpInputModal').focus(); }, 200);
+// ---------- Custom numpad (DP & Pinjaman) ----------
+let numpadBuffer = '';
+let numpadTarget = null; // 'dp' | 'pinjaman'
+
+function numpadUpdateDisplay() {
+  const displayId = numpadTarget === 'dp' ? 'dpNumpadDisplay' : 'pinjamanNumpadDisplay';
+  const el = document.getElementById(displayId);
+  if (!el) return;
+  el.textContent = formatRupiah(parseFloat(numpadBuffer) || 0);
 }
-function closeDpPinjamanModal() {
-  document.getElementById('dpPinjamanModalOverlay').classList.remove('show');
+
+function numpadPress(key) {
+  if (key === 'back') {
+    numpadBuffer = numpadBuffer.slice(0, -1);
+  } else if (key === 'clear') {
+    numpadBuffer = '';
+  } else {
+    numpadBuffer = (numpadBuffer === '0' ? '' : numpadBuffer) + key;
+    if (numpadBuffer.length > 12) numpadBuffer = numpadBuffer.slice(0, 12);
+  }
+  numpadUpdateDisplay();
+  haptic(8);
 }
-function saveDpPinjamanModal() {
-  bonDp = parseFloat(document.getElementById('dpInputModal').value) || 0;
-  bonPinjaman = parseFloat(document.getElementById('pinjamanInputModal').value) || 0;
+
+// ---------- DP modal ----------
+function openDpModal() {
+  numpadTarget = 'dp';
+  numpadBuffer = bonDp ? String(bonDp) : '';
+  numpadUpdateDisplay();
+  document.getElementById('dpModalOverlay').classList.add('show');
+}
+function closeDpModal() {
+  document.getElementById('dpModalOverlay').classList.remove('show');
+}
+function saveDpModal() {
+  bonDp = parseFloat(numpadBuffer) || 0;
   calculateSummary();
-  closeDpPinjamanModal();
+  closeDpModal();
+  haptic(12);
+}
+
+// ---------- Pinjaman modal ----------
+function openPinjamanModal() {
+  numpadTarget = 'pinjaman';
+  numpadBuffer = bonPinjaman ? String(bonPinjaman) : '';
+  numpadUpdateDisplay();
+  document.getElementById('pinjamanModalOverlay').classList.add('show');
+}
+function closePinjamanModal() {
+  document.getElementById('pinjamanModalOverlay').classList.remove('show');
+}
+function savePinjamanModal() {
+  bonPinjaman = parseFloat(numpadBuffer) || 0;
+  calculateSummary();
+  closePinjamanModal();
   haptic(12);
 }
 
