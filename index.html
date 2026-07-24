@@ -217,6 +217,8 @@ body::before{
 .dropdown-item:hover,.dropdown-item:active{background:var(--gold-soft);}
 .numpad-display{font-family:var(--font-mono);font-size:26px;font-weight:800;color:var(--ink);background:var(--paper-card2,var(--paper-card));border:1.5px solid var(--line);border-radius:14px;padding:16px 16px;text-align:right;margin-top:6px;letter-spacing:.3px;transition:border-color .15s;}
 .numpad-display.active{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft);}
+.numpad-box{position:relative;}
+.numpad-close{position:absolute;top:0;right:0;width:32px;height:32px;border-radius:9px;background:var(--line);border:none;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;}
 .numpad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 6px;}
 .numpad-btn{background:var(--paper-card2,var(--paper-card));border:1px solid var(--line);border-radius:14px;padding:15px 0;font-size:19px;font-weight:700;color:var(--ink);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:background .12s,transform .08s;font-family:var(--font-mono);}
 .numpad-btn:active{background:var(--gold-soft);transform:scale(0.95);}
@@ -678,25 +680,25 @@ body.dark-mode .install-banner i{color:var(--gold);}
 <div class="sheet-overlay" id="dpModalOverlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <button class="sheet-close" onclick="closeDpModal()"><i class="fas fa-xmark"></i></button>
     <div class="sheet-title"><i class="fas fa-hand-holding-dollar"></i>DP</div>
-    <div class="form-group">
+    <div class="numpad-box">
+      <button class="numpad-close" onclick="closeDpModal()"><i class="fas fa-xmark"></i></button>
       <label class="form-label"><i class="fas fa-hand-holding-dollar"></i>Jumlah DP</label>
       <div class="numpad-display active" id="dpNumpadDisplay">Rp 0</div>
-    </div>
-    <div class="numpad-grid">
-      <button type="button" class="numpad-btn" onclick="numpadPress('1')">1</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('2')">2</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('3')">3</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('4')">4</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('5')">5</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('6')">6</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('7')">7</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('8')">8</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('9')">9</button>
-      <button type="button" class="numpad-btn func" onclick="numpadPress('clear')">C</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('0')">0</button>
-      <button type="button" class="numpad-btn func" onclick="numpadPress('back')"><i class="fas fa-delete-left"></i></button>
+      <div class="numpad-grid">
+        <button type="button" class="numpad-btn" onclick="numpadPress('1')">1</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('2')">2</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('3')">3</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('4')">4</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('5')">5</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('6')">6</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('7')">7</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('8')">8</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('9')">9</button>
+        <button type="button" class="numpad-btn func" onclick="numpadPress('clear')">C</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('0')">0</button>
+        <button type="button" class="numpad-btn func" onclick="numpadPress('back')"><i class="fas fa-delete-left"></i></button>
+      </div>
     </div>
     <button class="btn-primary" onclick="saveDpModal()"><i class="fas fa-check"></i> Simpan</button>
   </div>
@@ -706,25 +708,25 @@ body.dark-mode .install-banner i{color:var(--gold);}
 <div class="sheet-overlay" id="pinjamanModalOverlay">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <button class="sheet-close" onclick="closePinjamanModal()"><i class="fas fa-xmark"></i></button>
     <div class="sheet-title"><i class="fas fa-money-bill-transfer"></i>Pinjaman</div>
-    <div class="form-group">
+    <div class="numpad-box">
+      <button class="numpad-close" onclick="closePinjamanModal()"><i class="fas fa-xmark"></i></button>
       <label class="form-label"><i class="fas fa-money-bill-transfer"></i>Jumlah Pinjaman</label>
       <div class="numpad-display active" id="pinjamanNumpadDisplay">Rp 0</div>
-    </div>
-    <div class="numpad-grid">
-      <button type="button" class="numpad-btn" onclick="numpadPress('1')">1</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('2')">2</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('3')">3</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('4')">4</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('5')">5</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('6')">6</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('7')">7</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('8')">8</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('9')">9</button>
-      <button type="button" class="numpad-btn func" onclick="numpadPress('clear')">C</button>
-      <button type="button" class="numpad-btn" onclick="numpadPress('0')">0</button>
-      <button type="button" class="numpad-btn func" onclick="numpadPress('back')"><i class="fas fa-delete-left"></i></button>
+      <div class="numpad-grid">
+        <button type="button" class="numpad-btn" onclick="numpadPress('1')">1</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('2')">2</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('3')">3</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('4')">4</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('5')">5</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('6')">6</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('7')">7</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('8')">8</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('9')">9</button>
+        <button type="button" class="numpad-btn func" onclick="numpadPress('clear')">C</button>
+        <button type="button" class="numpad-btn" onclick="numpadPress('0')">0</button>
+        <button type="button" class="numpad-btn func" onclick="numpadPress('back')"><i class="fas fa-delete-left"></i></button>
+      </div>
     </div>
     <button class="btn-primary" onclick="savePinjamanModal()"><i class="fas fa-check"></i> Simpan</button>
   </div>
