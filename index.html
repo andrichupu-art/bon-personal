@@ -953,7 +953,7 @@ async function loadDataFromSupabase() {
 async function writeSessionToSupabase(session, allowQueue) {
   const totalPaid = (session.payments || []).reduce(function (s, p) { return s + p.amount; }, 0);
   const remaining = Math.max(0, session.sisa - totalPaid);
-  const status = (session.status === 'lunas' || remaining <= 0) ? 'lunas' : 'active';
+  const status = remaining <= 0 ? 'lunas' : 'active';
   session.status = status;
   try {
     const { error } = await supabaseClient.from('bonku_sessions').upsert({
@@ -1612,10 +1612,16 @@ async function processPayment() {
 }
 
 async function markLunas(sessionId) {
-  const ok = await showConfirm({ title: 'Tandai Lunas?', message: 'Sesi ini akan ditutup dan dianggap lunas. Transaksi baru untuk vendor ini akan membuka sesi baru.', icon: 'fa-stamp', okText: 'Ya, Tandai Lunas', danger: false });
-  if (!ok) return;
   const session = sessions.find(function (s) { return s.id === sessionId; });
   if (!session) return;
+  const paid = (session.payments || []).reduce(function (s, p) { return s + p.amount; }, 0);
+  const remaining = Math.max(0, session.sisa - paid);
+  const message = remaining > 0
+    ? 'Sesi ini masih punya sisa tagihan ' + formatRupiah(remaining) + '. Menandai lunas akan menghapuskan sisa tersebut (dianggap lunas paksa). Transaksi baru untuk vendor ini akan membuka sesi baru.'
+    : 'Sesi ini akan ditutup dan dianggap lunas. Transaksi baru untuk vendor ini akan membuka sesi baru.';
+  const ok = await showConfirm({ title: 'Tandai Lunas?', message: message, icon: 'fa-stamp', okText: 'Ya, Tandai Lunas', danger: remaining > 0 });
+  if (!ok) return;
+  if (remaining > 0) session.sisa = paid;
   session.status = 'lunas';
   session.lastUpdate = new Date().toISOString();
   showLoader();
