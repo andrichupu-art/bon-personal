@@ -291,6 +291,10 @@ body.dark-mode .summary-box.grand .value{color:var(--gold);}
   box-shadow:0 10px 26px rgba(164,59,51,0.35);position:relative;overflow:hidden;transition:.2s;
 }
 .btn-primary:active{transform:scale(.98);}
+.btn-primary:disabled{
+  background:var(--line);color:#9a9184;box-shadow:none;cursor:not-allowed;opacity:.7;
+}
+.btn-primary:disabled:active{transform:none;}
 .btn-secondary{
   width:100%;padding:14px;border:1.5px solid var(--line);border-radius:var(--radius-md);
   background:var(--paper-card);color:var(--ink);font-weight:700;font-size:13.5px;cursor:pointer;
@@ -616,7 +620,7 @@ body.dark-mode .install-banner i{color:var(--gold);}
     <div class="sheet-title"><span id="itemModalTitle"><i class="fas fa-basket-shopping"></i>Tambah Item</span><button class="numpad-close title-close" onclick="closeItemModal()"><i class="fas fa-xmark"></i></button></div>
     <div class="form-group" style="position:relative;">
       <label class="form-label"><i class="fas fa-tag"></i>Nama Barang</label>
-      <input type="text" id="itemNamaInput" class="custom-input" placeholder="Contoh: Kain Katun" autocomplete="off" oninput="forceTitleCaseInput(this);showItemSuggestions()" onfocus="showItemSuggestions()">
+      <input type="text" id="itemNamaInput" class="custom-input" placeholder="Contoh: Kain Katun" autocomplete="off" oninput="forceTitleCaseInput(this);showItemSuggestions();checkItemFormValid()" onfocus="showItemSuggestions()">
       <div id="itemSuggestDropdown" class="dropdown-menu"></div>
     </div>
     <div class="input-row3">
@@ -637,7 +641,7 @@ body.dark-mode .install-banner i{color:var(--gold);}
       </div>
     </div>
     <div class="summary-box grand" style="margin-bottom:16px;"><div class="label">Subtotal</div><div class="value" id="itemSubtotalPreview">Rp 0</div></div>
-    <button class="btn-primary" onclick="saveItemModal()"><i class="fas fa-check"></i> Simpan Item</button>
+    <button class="btn-primary" id="saveItemBtn" onclick="saveItemModal()" disabled><i class="fas fa-check"></i> OK</button>
   </div>
 </div>
 
@@ -666,7 +670,7 @@ body.dark-mode .install-banner i{color:var(--gold);}
         <button type="button" class="numpad-btn func" onclick="numpadPress('back')"><i class="fas fa-delete-left"></i></button>
       </div>
     </div>
-    <button class="btn-primary" onclick="saveItemHargaModal()"><i class="fas fa-check"></i> Simpan</button>
+    <button class="btn-primary" onclick="saveItemHargaModal()"><i class="fas fa-check"></i> OK</button>
   </div>
 </div>
 
@@ -1224,6 +1228,7 @@ function openItemModal(id) {
   document.getElementById('itemHargaInput').value = item ? item.harga : '';
   syncItemHargaDisplay();
   updateItemSubtotalPreview();
+  checkItemFormValid();
   document.getElementById('itemModalOverlay').classList.add('show');
   if (!item) setTimeout(function () { document.getElementById('itemNamaInput').focus(); }, 250);
 }
@@ -1235,6 +1240,14 @@ function updateItemSubtotalPreview() {
   const qty = parseFloat(document.getElementById('itemQtyInput').value) || 0;
   const harga = parseFloat(document.getElementById('itemHargaInput').value) || 0;
   document.getElementById('itemSubtotalPreview').textContent = formatRupiah(qty * harga);
+  checkItemFormValid();
+}
+function checkItemFormValid() {
+  const nama = document.getElementById('itemNamaInput').value.trim();
+  const qty = parseFloat(document.getElementById('itemQtyInput').value) || 0;
+  const harga = parseFloat(document.getElementById('itemHargaInput').value) || 0;
+  const valid = nama.length > 0 && qty > 0 && harga > 0;
+  document.getElementById('saveItemBtn').disabled = !valid;
 }
 function saveItemModal() {
   const nama = document.getElementById('itemNamaInput').value.trim();
@@ -1243,7 +1256,7 @@ function saveItemModal() {
   const harga = parseFloat(document.getElementById('itemHargaInput').value) || 0;
   if (!nama) { showNotification('Nama barang wajib diisi!', 'error'); return; }
   if (qty <= 0) { showNotification('Qty harus lebih dari 0!', 'error'); return; }
-  if (harga < 0) { showNotification('Harga tidak boleh negatif!', 'error'); return; }
+  if (harga <= 0) { showNotification('Harga wajib diisi (tidak boleh Rp 0)!', 'error'); return; }
   if (editingItemId) {
     const item = bonItems.find(function (i) { return i.id === editingItemId; });
     if (item) { item.nama = nama; item.qty = qty; item.satuan = satuan; item.harga = harga; }
