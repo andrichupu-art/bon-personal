@@ -1,5 +1,5 @@
 // BonKu Service Worker
-const CACHE_VERSION = 'bonku-v1';
+const CACHE_VERSION = 'bonku-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -50,9 +50,10 @@ self.addEventListener('fetch', function (event) {
   }
 
   // Network-first for navigation requests, so users get the latest app version when online.
+  // cache:'no-store' forces bypassing the browser's HTTP cache too, not just the SW cache.
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then(function (res) {
           const resClone = res.clone();
           caches.open(CACHE_VERSION).then(function (cache) { cache.put('./index.html', resClone); });
