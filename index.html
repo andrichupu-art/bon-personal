@@ -1750,7 +1750,7 @@ async function downloadBon(sessionId) {
   const paid = (session.payments || []).reduce(function (s, p) { return s + p.amount; }, 0);
   const remaining = Math.max(0, session.sisa - paid);
   const preview = document.getElementById('bonPreview');
-  preview.style.cssText = 'position:fixed;left:-9999px;top:0;width:360px;background:#fff;';
+  preview.style.cssText = 'position:absolute;left:-9999px;top:0;width:360px;background:#fff;';
 
   const itemsHtml = (session.items || []).map(function (item) {
     return '<tr>' +
@@ -1779,8 +1779,10 @@ async function downloadBon(sessionId) {
     '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ddd;">' +
     '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Total</span><span style="font-weight:700;color:#22304A;">' + formatRupiah(session.total) + '</span></div>' +
     '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>DP</span><span style="font-weight:700;color:#3C7A5C;">' + formatRupiah(session.dp) + '</span></div>' +
-    '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Pinjaman</span><span style="font-weight:700;color:#A43B33;">' + formatRupiah(session.pinjaman) + '</span></div>' +
-    '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Sudah Dibayar</span><span style="font-weight:700;color:#22304A;">' + formatRupiah(paid) + '</span></div>' +
+    (session.pinjaman > 0 ?
+      '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Pinjaman</span><span style="font-weight:700;color:#A43B33;">' + formatRupiah(session.pinjaman) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Sudah Dibayar</span><span style="font-weight:700;color:#22304A;">' + formatRupiah(paid) + '</span></div>'
+      : '') +
     '</div>' +
     '<div style="margin-top:10px;background:linear-gradient(135deg,#22304A,#16233B);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">' +
     '<span style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Sisa Tagihan</span>' +
@@ -1807,7 +1809,14 @@ async function downloadBon(sessionId) {
         img.onerror = resolve;
       });
     }));
-    const canvas = await html2canvas(preview, { backgroundColor: '#ffffff', scale: 2 });
+    const canvas = await html2canvas(preview, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      width: preview.scrollWidth,
+      height: preview.scrollHeight,
+      windowWidth: preview.scrollWidth,
+      windowHeight: preview.scrollHeight
+    });
     const link = document.createElement('a');
     link.download = 'Bon_' + session.vendor.replace(/\s+/g, '_') + '_' + session.id + '.png';
     link.href = canvas.toDataURL('image/png');
