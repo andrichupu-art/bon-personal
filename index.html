@@ -1585,14 +1585,16 @@ function sessionCardHTML(session, compact) {
     '<div class="session-header" onclick="toggleSessionCard(this)"><div><div class="vendor-name"><i class="fas fa-store"></i>' + session.vendor + '</div><div class="session-date">' + formatDateID(session.tanggal) + '</div></div><div class="session-header-right"><span class="status-badge ' + (isLunas ? 'lunas' : 'active') + '">' + (isLunas ? 'Lunas' : 'Aktif') + '</span>' + (compact ? '' : '<i class="fas fa-chevron-down session-chevron"></i>') + '</div></div>' +
     (compact ? '<div class="session-items">' + itemsHtml + '</div><div class="session-footer">' +
     '<div class="footer-item"><div class="label">Total</div><div class="value">' + formatRupiah(session.total) + '</div></div>' +
-    '<div class="footer-item"><div class="label">DP+Pinjaman-DP</div><div class="value">' + formatRupiah((session.pinjaman || 0) - (session.dp || 0)) + '</div></div>' +
+    '<div class="footer-item"><div class="label">DP</div><div class="value">' + formatRupiah(session.dp || 0) + '</div></div>' +
+    '<div class="footer-item"><div class="label">Pinjaman</div><div class="value">' + formatRupiah(session.pinjaman || 0) + '</div></div>' +
     '<div class="footer-item remaining' + (remaining <= 0 ? ' paid' : '') + '"><div class="label">' + (remaining <= 0 ? 'Lunas' : 'Sisa Tagihan') + '</div><div class="value">' + formatRupiah(remaining) + '</div></div>' +
     '</div>' :
     '<div class="session-body"><div class="session-body-inner">' +
     '<div class="session-items">' + itemsHtml + '</div>' + paymentsHtml +
     '<div class="session-footer">' +
     '<div class="footer-item"><div class="label">Total</div><div class="value">' + formatRupiah(session.total) + '</div></div>' +
-    '<div class="footer-item"><div class="label">DP+Pinjaman-DP</div><div class="value">' + formatRupiah((session.pinjaman || 0) - (session.dp || 0)) + '</div></div>' +
+    '<div class="footer-item"><div class="label">DP</div><div class="value">' + formatRupiah(session.dp || 0) + '</div></div>' +
+    '<div class="footer-item"><div class="label">Pinjaman</div><div class="value">' + formatRupiah(session.pinjaman || 0) + '</div></div>' +
     '<div class="footer-item remaining' + (remaining <= 0 ? ' paid' : '') + '"><div class="label">' + (remaining <= 0 ? 'Lunas' : 'Sisa Tagihan') + '</div><div class="value">' + formatRupiah(remaining) + '</div></div>' +
     '</div><div class="session-actions">' + actionButtons + '</div>' +
     '</div></div>') + '</div>';
