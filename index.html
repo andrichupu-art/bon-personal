@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <meta name="theme-color" content="#22304A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -401,7 +401,7 @@ body.dark-mode .settings-row-info i{color:var(--gold);}
 body.dark-mode #creditLogo{filter:brightness(0) invert(1);}
 /* ---------- BOTTOM NAV ---------- */
 .bottom-nav{
-  position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;
+  position:fixed;bottom:0;left:0;right:0;max-width:600px;margin:0 auto;
   background:var(--paper-card);backdrop-filter:blur(20px);display:flex;justify-content:space-around;
   padding:9px 0 max(10px,env(safe-area-inset-bottom));z-index:1000;border-radius:22px 22px 0 0;
   box-shadow:0 -8px 26px rgba(0,0,0,0.1);border-top:1px solid var(--line);
@@ -460,6 +460,10 @@ body.dark-mode .install-banner i{color:var(--gold);}
 .install-banner .it span{font-size:10.5px;color:var(--ink-soft);}
 .install-banner button{background:var(--gold);color:#fff;border:none;padding:8px 13px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;}
 
+#paymentModalOverlay{z-index:2100;}
+.session-actions button.btn-hapus{flex:0 0 44px;background:var(--brick-soft);color:var(--brick);}
+.custom-input,.custom-select{font-size:16px;}
+.plog-row i{padding:4px;}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}}
 </style>
 </head>
@@ -481,6 +485,7 @@ body.dark-mode .install-banner i{color:var(--gold);}
     <i class="fas fa-mobile-screen-button"></i>
     <div class="it"><b>Pasang BonKu di HP</b><span>Akses lebih cepat tanpa buka browser</span></div>
     <button onclick="installPWA()">Pasang</button>
+    <button onclick="dismissInstall()" aria-label="Tutup" style="background:transparent;color:var(--ink-soft);padding:8px 6px;"><i class="fas fa-xmark" style="font-size:15px;color:inherit;"></i></button>
   </div>
 
   <!-- ================= TAB: BUAT BON ================= -->
@@ -503,7 +508,7 @@ body.dark-mode .install-banner i{color:var(--gold);}
     <div class="paper-card">
       <div class="form-group" style="position:relative;">
         <label class="form-label"><i class="fas fa-store"></i>Vendor</label>
-        <input type="text" id="vendorInput" class="custom-input" placeholder="Ketik atau pilih vendor..." autocomplete="off" inputmode="none" oninput="forceUpperCaseInput(this);filterVendors()" onfocus="showVendorDropdown()">
+        <input type="text" id="vendorInput" class="custom-input" placeholder="Ketik atau pilih vendor..." autocomplete="off" oninput="forceUpperCaseInput(this);filterVendors()" onfocus="showVendorDropdown()">
         <div id="vendorDropdown" class="dropdown-menu"></div>
       </div>
     </div>
@@ -569,17 +574,15 @@ body.dark-mode .install-banner i{color:var(--gold);}
         <div class="toggle-switch" id="darkToggle" onclick="toggleSetting(this,'dark')"></div>
       </div>
       <div class="settings-row">
-        <div class="settings-row-info"><i class="fas fa-bell"></i><div><div class="t">Notifikasi</div><div class="d">Pemberitahuan aktivitas bon</div></div></div>
-        <div class="toggle-switch active" id="notifToggle" onclick="toggleSetting(this,'notif')"></div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-info"><i class="fas fa-cloud-arrow-up"></i><div><div class="t">Auto Backup</div><div class="d">Simpan otomatis ke Supabase</div></div></div>
-        <div class="toggle-switch active" id="backupToggle" onclick="toggleSetting(this,'backup')"></div>
-      </div>
-      <div class="settings-row">
         <div class="settings-row-info"><i class="fas fa-shoe-prints"></i><div><div class="t">Getar Sentuhan</div><div class="d">Haptic feedback saat tap</div></div></div>
         <div class="toggle-switch active" id="hapticToggle" onclick="toggleSetting(this,'haptic')"></div>
       </div>
+    </div>
+
+    <div class="section-title"><span><span class="eyebrow">Nota</span>Rekening Pembayaran</span></div>
+    <div class="paper-card">
+      <div class="form-group"><label class="form-label"><i class="fas fa-building-columns"></i>Bank &amp; Nomor Rekening</label><input type="text" id="rekInfoInput" class="custom-input mono-input" placeholder="Contoh: BCA 1234567890" oninput="saveRekening()"></div>
+      <div class="form-group"><label class="form-label"><i class="fas fa-user"></i>Atas Nama</label><input type="text" id="rekNameInput" class="custom-input" placeholder="NAMA PEMILIK" oninput="forceUpperCaseInput(this);saveRekening()"></div>
     </div>
 
     <div class="section-title"><span><span class="eyebrow">Data</span>Cadangkan Data</span></div>
@@ -834,6 +837,10 @@ let currentVendorForItem = null;
 let realtimeChannel = null;
 let confirmResolver = null;
 const PENDING_KEY = 'bonku_pending_writes_v2';
+let expandedSessions = new Set();
+let currentVendorDetail = null;
+let itemSuggestShown = [];
+let flushing = false;
 
 // ---------- Local date helpers (hindari bug timezone WIB / toISOString) ----------
 function localDateStr(d) {
@@ -858,6 +865,51 @@ function formatRupiah(angka) {
   return 'Rp ' + n.toLocaleString('id-ID');
 }
 function uid() { return Date.now() + Math.floor(Math.random() * 1000); }
+function escapeHtml(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function isoToLocalDateStr(iso) {
+  if (!iso) return '';
+  if (iso.length <= 10) return iso;
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? iso.slice(0, 10) : localDateStr(d);
+}
+const REK_DEFAULT = { info: 'BCA 5140250521', name: 'ANDRI YANTO' };
+function getRekening() {
+  try {
+    const r = JSON.parse(localStorage.getItem('bonku_rekening') || 'null');
+    if (r) return { info: r.info || '', name: r.name || '' };
+  } catch (e) {}
+  return REK_DEFAULT;
+}
+function restoreRekening() {
+  const r = getRekening();
+  const a = document.getElementById('rekInfoInput'), b = document.getElementById('rekNameInput');
+  if (a) a.value = r.info;
+  if (b) b.value = r.name;
+}
+function saveRekening() {
+  try {
+    localStorage.setItem('bonku_rekening', JSON.stringify({
+      info: document.getElementById('rekInfoInput').value.trim(),
+      name: document.getElementById('rekNameInput').value.trim()
+    }));
+  } catch (e) {}
+}
+function refreshVendorDetailIfOpen() {
+  if (currentVendorDetail && document.getElementById('vendorDetailOverlay').classList.contains('show')) {
+    openVendorDetail(currentVendorDetail);
+  }
+}
+function startBonForVendor(nama) {
+  closeVendorDetail();
+  switchTabNav('buat');
+  document.getElementById('vendorInput').value = nama;
+  checkActiveSessionForCurrentVendor();
+  calculateSummary();
+}
 
 // ---------- Haptic ----------
 function haptic(ms) {
@@ -868,6 +920,7 @@ function haptic(ms) {
 // ---------- Init ----------
 document.addEventListener('DOMContentLoaded', async function () {
   restoreSettingsPreferences();
+  restoreRekening();
   updateConnDot();
   window.addEventListener('online', function () { updateConnDot(); flushPendingQueue(); });
   window.addEventListener('offline', updateConnDot);
@@ -884,9 +937,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   flushPendingQueue();
 
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function () {});
-    });
+    navigator.serviceWorker.register('sw.js').catch(function () {});
   }
 });
 
@@ -895,6 +946,8 @@ function renderAll() {
   renderRekap(true);
   renderSettingsVendors_legacyNoop();
   renderVendorTab();
+  saveCache();
+  refreshVendorDetailIfOpen();
 }
 function renderSettingsVendors_legacyNoop() {} // kept for naming symmetry, vendor list now lives in tab-vendor
 
@@ -912,44 +965,92 @@ function getPendingQueue() {
 }
 function setPendingQueue(q) { localStorage.setItem(PENDING_KEY, JSON.stringify(q)); }
 function queuePendingWrite(kind, payload) {
-  const q = getPendingQueue();
+  let q = getPendingQueue();
+  if (kind === 'session' || kind === 'session-del') {
+    const sid = kind === 'session' ? payload.id : payload;
+    q = q.filter(function (it) {
+      return !((it.kind === 'session' && it.payload.id === sid) || (it.kind === 'session-del' && it.payload === sid));
+    });
+  }
   q.push({ kind: kind, payload: payload, ts: Date.now() });
   setPendingQueue(q);
 }
 async function flushPendingQueue() {
   if (!navigator.onLine) return;
   let q = getPendingQueue();
-  if (!q.length) return;
+  if (!q.length || flushing) return;
+  flushing = true;
   const remaining = [];
   for (const item of q) {
     try {
       if (item.kind === 'session') await writeSessionToSupabase(item.payload, false);
       else if (item.kind === 'vendor-add') await writeVendorAdd(item.payload, false);
       else if (item.kind === 'vendor-del') await writeVendorDelete(item.payload, false);
+      else if (item.kind === 'session-del') await writeSessionDelete(item.payload, false);
     } catch (e) { remaining.push(item); }
   }
-  setPendingQueue(remaining);
+  const latest = getPendingQueue().filter(function (c) {
+    return !q.some(function (x) { return x.ts === c.ts && x.kind === c.kind; });
+  });
+  setPendingQueue(remaining.concat(latest));
+  flushing = false;
   if (remaining.length === 0 && q.length > 0) showNotification('Semua perubahan tersinkron ke server', 'success');
 }
 
 // ---------- Supabase: load ----------
-async function loadDataFromSupabase() {
-  showLoader();
+const CACHE_KEY = 'bonku_cache_v2';
+async function fetchAllRows(table, columns, orderCol, ascending, tieCol) {
+  const pageSize = 1000;
+  let from = 0, all = [];
+  while (true) {
+    let q = supabaseClient.from(table).select(columns).order(orderCol, { ascending: ascending });
+    if (tieCol) q = q.order(tieCol, { ascending: true });
+    const { data, error } = await q.range(from, from + pageSize - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
+function saveCache() {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ sessions: sessions, vendors: vendors })); } catch (e) {}
+}
+function loadCache() {
   try {
-    const { data: sessionRows, error: sessErr } = await supabaseClient
-      .from('bonku_sessions').select('*').order('last_update', { ascending: false });
-    if (sessErr) throw sessErr;
-    sessions = (sessionRows || []).map(function (row) { return row.data || row; }).filter(Boolean);
-
-    const { data: vendorRows, error: vendErr } = await supabaseClient
-      .from('bonku_vendors').select('nama').order('nama', { ascending: true });
-    if (vendErr) throw vendErr;
-    vendors = (vendorRows || []).map(function (row) { return row.nama; });
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (c) { sessions = c.sessions || []; vendors = c.vendors || []; }
+  } catch (e) {}
+}
+function applyPendingToState() {
+  getPendingQueue().forEach(function (item) {
+    if (item.kind === 'session') {
+      const idx = sessions.findIndex(function (s) { return s.id === item.payload.id; });
+      if (idx >= 0) sessions[idx] = item.payload; else sessions.unshift(item.payload);
+    } else if (item.kind === 'session-del') {
+      sessions = sessions.filter(function (s) { return s.id !== item.payload; });
+    } else if (item.kind === 'vendor-add') {
+      if (!vendors.includes(item.payload)) vendors.push(item.payload);
+    } else if (item.kind === 'vendor-del') {
+      vendors = vendors.filter(function (v) { return v !== item.payload; });
+    }
+  });
+}
+async function loadDataFromSupabase(silent) {
+  if (!silent) showLoader();
+  try {
+    const sessionRows = await fetchAllRows('bonku_sessions', '*', 'last_update', false, 'id');
+    const vendorRows = await fetchAllRows('bonku_vendors', 'nama', 'nama', true);
+    sessions = sessionRows.map(function (row) { return row.data || row; }).filter(Boolean);
+    vendors = vendorRows.map(function (row) { return row.nama; });
+    applyPendingToState();
+    saveCache();
   } catch (err) {
     console.error('Gagal memuat data dari Supabase:', err);
-    showNotification('Gagal memuat data — cek koneksi internet', 'error');
+    if (!sessions.length && !vendors.length) { loadCache(); applyPendingToState(); }
+    if (!silent) showNotification('Gagal memuat — menampilkan data tersimpan di perangkat', 'error');
   } finally {
-    hideLoader();
+    if (!silent) hideLoader();
   }
 }
 
@@ -993,16 +1094,30 @@ async function writeVendorDelete(nama, allowQueue) {
   }
 }
 
+async function writeSessionDelete(id, allowQueue) {
+  try {
+    const { error } = await supabaseClient.from('bonku_sessions').delete().eq('id', id);
+    if (error) throw error;
+  } catch (err) {
+    console.error('Gagal menghapus sesi:', err);
+    if (allowQueue !== false) queuePendingWrite('session-del', id); else throw err;
+  }
+}
+
 // ---------- Realtime sync (multi-device) ----------
+let realtimeTimer = null;
+function scheduleRealtimeReload() {
+  clearTimeout(realtimeTimer);
+  realtimeTimer = setTimeout(async function () {
+    await loadDataFromSupabase(true);
+    renderAll();
+  }, 400);
+}
 function subscribeRealtime() {
   if (realtimeChannel) return;
   realtimeChannel = supabaseClient.channel('bonku-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'bonku_sessions' }, async function () {
-      await loadDataFromSupabase(); renderAll();
-    })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'bonku_vendors' }, async function () {
-      await loadDataFromSupabase(); renderAll();
-    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bonku_sessions' }, scheduleRealtimeReload)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bonku_vendors' }, scheduleRealtimeReload)
     .subscribe();
 }
 
@@ -1032,7 +1147,9 @@ function showNotification(message, type) {
   const toast = document.createElement('div');
   toast.className = 'toast ' + (type || '');
   const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info');
-  toast.innerHTML = '<i class="fas ' + icon + '"></i><span>' + message + '</span>';
+  const ic = document.createElement('i'); ic.className = 'fas ' + icon;
+  const sp = document.createElement('span'); sp.textContent = message;
+  toast.appendChild(ic); toast.appendChild(sp);
   container.appendChild(toast);
   setTimeout(function () { toast.classList.add('hide'); setTimeout(function () { toast.remove(); }, 260); }, 2800);
 }
@@ -1087,11 +1204,7 @@ function restoreSettingsPreferences() {
     document.getElementById('darkToggle').classList.add('active');
     forceRepaint();
   }
-  ['notif', 'backup'].forEach(function (key) {
-    const val = localStorage.getItem('bonku_' + key);
-    const el = document.getElementById(key + 'Toggle');
-    if (val === '0') el.classList.remove('active');
-  });
+  
   if (localStorage.getItem('bonku_haptic') === 'off') document.getElementById('hapticToggle').classList.remove('active');
 }
 
@@ -1134,7 +1247,7 @@ function renderVendorDropdownList(dd, list) {
   else {
     dd.innerHTML = list.map(function (v) {
       const openSess = sessions.find(function (s) { return s.vendor === v && s.status !== 'lunas'; });
-      return '<div class="dropdown-item" onclick="selectVendor(\'' + v.replace(/'/g, "\\'") + '\')"><span>' + v + '</span>' + (openSess ? '<small>sesi aktif</small>' : '') + '</div>';
+      return '<div class="dropdown-item" data-v="' + escapeHtml(v) + '" onclick="selectVendor(this.dataset.v)"><span>' + escapeHtml(v) + '</span>' + (openSess ? '<small>sesi aktif</small>' : '') + '</div>';
     }).join('');
   }
   dd.classList.add('show');
@@ -1163,7 +1276,7 @@ function checkActiveSessionForCurrentVendor() {
   if (open) {
     const paid = (open.payments || []).reduce(function (s, p) { return s + p.amount; }, 0);
     const remaining = Math.max(0, open.sisa - paid);
-    banner.innerHTML = '<div class="active-session-banner"><i class="fas fa-layer-group"></i><div><div class="t1">Sesi berjalan ditemukan untuk ' + nama + '</div><div class="t2">Item baru akan ditambahkan ke bon yang sama — sisa saat ini ' + formatRupiah(remaining) + '</div></div></div>';
+    banner.innerHTML = '<div class="active-session-banner"><i class="fas fa-layer-group"></i><div><div class="t1">Sesi berjalan ditemukan untuk ' + escapeHtml(nama) + '</div><div class="t2">Item baru akan ditambahkan ke bon yang sama — sisa saat ini ' + formatRupiah(remaining) + '</div></div></div>';
   } else {
     banner.innerHTML = '';
   }
@@ -1199,8 +1312,9 @@ function showItemSuggestions() {
   if (!q) { dd.classList.remove('show'); return; }
   const list = itemSuggestPool.filter(function (it) { return it.nama.toLowerCase().includes(q); }).slice(0, 6);
   if (!list.length) { dd.classList.remove('show'); return; }
-  dd.innerHTML = list.map(function (it) {
-    return '<div class="dropdown-item" onclick=\'pickItemSuggestion(' + JSON.stringify(it).replace(/'/g, "&#39;") + ')\'><span>' + it.nama + '</span><small>' + formatRupiah(it.harga) + ' / ' + it.satuan + '</small></div>';
+  itemSuggestShown = list;
+  dd.innerHTML = list.map(function (it, i) {
+    return '<div class="dropdown-item" onclick="pickItemSuggestion(itemSuggestShown[' + i + '])"><span>' + escapeHtml(it.nama) + '</span><small>' + formatRupiah(it.harga) + ' / ' + escapeHtml(it.satuan) + '</small></div>';
   }).join('');
   dd.classList.add('show');
 }
@@ -1239,7 +1353,7 @@ function closeItemModal() {
 function updateItemSubtotalPreview() {
   const qty = parseFloat(document.getElementById('itemQtyInput').value) || 0;
   const harga = parseFloat(document.getElementById('itemHargaInput').value) || 0;
-  document.getElementById('itemSubtotalPreview').textContent = formatRupiah(qty * harga);
+  document.getElementById('itemSubtotalPreview').textContent = formatRupiah(Math.round(qty * harga));
   checkItemFormValid();
 }
 function checkItemFormValid() {
@@ -1283,8 +1397,8 @@ function renderItems() {
   container.innerHTML = bonItems.map(function (item, idx) {
     return '<div class="item-row">' +
       '<div class="item-badge">' + (idx + 1) + '</div>' +
-      '<div class="item-info"><div class="nm">' + item.nama + '</div>' +
-      '<div class="meta"><span>' + item.qty + ' ' + (item.satuan || 'Pcs') + '</span><span class="price">' + formatRupiah(item.qty * item.harga) + '</span></div></div>' +
+      '<div class="item-info"><div class="nm">' + escapeHtml(item.nama) + '</div>' +
+      '<div class="meta"><span>' + item.qty + ' ' + (item.satuan || 'Pcs') + '</span><span class="price">' + formatRupiah(Math.round(item.qty * item.harga)) + '</span></div></div>' +
       '<div class="item-actions">' +
       '<button class="btn-ico-edit" onclick="openItemModal(' + item.id + ')"><i class="fas fa-pen"></i></button>' +
       '<button class="btn-ico-del" onclick="removeItem(' + item.id + ')"><i class="fas fa-trash"></i></button>' +
@@ -1292,7 +1406,7 @@ function renderItems() {
   }).join('');
 }
 function calculateSummary() {
-  const total = bonItems.reduce(function (sum, item) { return sum + (item.qty * item.harga); }, 0);
+  const total = bonItems.reduce(function (sum, item) { return sum + Math.round(item.qty * item.harga); }, 0);
   const dp = bonDp;
   const pinjaman = bonPinjaman;
   document.getElementById('totalTagihan').textContent = formatRupiah(total);
@@ -1411,8 +1525,20 @@ async function saveBon() {
 
   showLoader();
   try {
+    if (navigator.onLine) await loadDataFromSupabase(true);
+    const subNew = bonItems.reduce(function (s, i) { return s + Math.round(i.qty * i.harga); }, 0);
+    const openNow = findActiveSessionForVendor(vendorNama);
+    let baseRemaining = 0;
+    if (openNow) {
+      const paidNow = (openNow.payments || []).reduce(function (s, p) { return s + p.amount; }, 0);
+      baseRemaining = Math.max(0, openNow.sisa - paidNow);
+    }
+    if (baseRemaining + subNew + pinjaman - dp < 0) {
+      showNotification('DP melebihi total tagihan — periksa DP atau tambahkan item', 'error');
+      return;
+    }
     const newItemsWithDate = bonItems.map(function (it) {
-      return { nama: it.nama, qty: it.qty, satuan: it.satuan || 'Pcs', harga: it.harga, subtotal: it.qty * it.harga, tanggal: tanggal };
+      return { nama: it.nama, qty: it.qty, satuan: it.satuan || 'Pcs', harga: it.harga, subtotal: Math.round(it.qty * it.harga), tanggal: tanggal };
     });
     const newSubtotal = newItemsWithDate.reduce(function (s, i) { return s + i.subtotal; }, 0);
 
@@ -1424,7 +1550,6 @@ async function saveBon() {
       session.pinjaman = (session.pinjaman || 0) + pinjaman;
       session.total = (session.total || 0) + newSubtotal;
       session.sisa = (session.sisa || 0) + newSubtotal + pinjaman - dp;
-      session.tanggal = tanggal;
       session.lastUpdate = new Date().toISOString();
       showNotification('Bon ditambahkan ke sesi berjalan ' + vendorNama, 'success');
     } else {
@@ -1482,7 +1607,7 @@ function updateHomeStats() {
     return sum + Math.max(0, s.sisa - paid);
   }, 0);
   const thisMonth = localDateStr().slice(0, 7);
-  const lunasBulanIni = sessions.filter(function (s) { return s.status === 'lunas' && (s.lastUpdate || '').slice(0, 7) === thisMonth; }).length;
+  const lunasBulanIni = sessions.filter(function (s) { return s.status === 'lunas' && (s.lunasDate || isoToLocalDateStr(s.lastUpdate)).slice(0, 7) === thisMonth; }).length;
 
   animateCounter(document.getElementById('homeStatHutang'), totalHutang, true);
   document.getElementById('homeStatHutangSub').textContent = 'dari ' + active.length + ' sesi aktif';
@@ -1552,13 +1677,13 @@ function sessionCardHTML(session, compact) {
   let itemsHtml = '';
   if (compact) {
     itemsHtml = (session.items || []).slice(0, 2).map(function (it) {
-      return '<div class="session-item"><div><div class="item-name">' + it.nama + '</div><div class="item-qty">' + it.qty + ' ' + (it.satuan || 'Pcs') + ' &times; ' + formatRupiah(it.harga) + '</div></div><div class="item-price">' + formatRupiah(it.subtotal) + '</div></div>';
+      return '<div class="session-item"><div><div class="item-name">' + escapeHtml(it.nama) + '</div><div class="item-qty">' + it.qty + ' ' + (it.satuan || 'Pcs') + ' &times; ' + formatRupiah(it.harga) + '</div></div><div class="item-price">' + formatRupiah(it.subtotal) + '</div></div>';
     }).join('');
     if ((session.items || []).length > 2) itemsHtml += '<div style="text-align:center;font-size:11px;color:var(--ink-soft);padding-top:6px;">+' + (session.items.length - 2) + ' item lainnya</div>';
   } else {
     itemsHtml = order.map(function (key) {
       const rows = batches[key].map(function (it) {
-        return '<div class="session-item"><div><div class="item-name">' + it.nama + '</div><div class="item-qty">' + it.qty + ' ' + (it.satuan || 'Pcs') + ' &times; ' + formatRupiah(it.harga) + '</div></div><div class="item-price">' + formatRupiah(it.subtotal) + '</div></div>';
+        return '<div class="session-item"><div><div class="item-name">' + escapeHtml(it.nama) + '</div><div class="item-qty">' + it.qty + ' ' + (it.satuan || 'Pcs') + ' &times; ' + formatRupiah(it.harga) + '</div></div><div class="item-price">' + formatRupiah(it.subtotal) + '</div></div>';
       }).join('');
       return '<div class="batch-label"><i class="fas fa-clock" style="font-size:9px;"></i>' + formatDateShortID(key) + '</div>' + rows;
     }).join('');
@@ -1566,23 +1691,23 @@ function sessionCardHTML(session, compact) {
 
   let paymentsHtml = '';
   if (!compact && session.payments && session.payments.length) {
-    paymentsHtml = '<div class="payment-log">' + session.payments.map(function (p) {
-      return '<div class="plog-row"><span>' + formatDateShortID((p.date || '').slice(0, 10)) + '</span><span>' + formatRupiah(p.amount) + '</span></div>';
+    paymentsHtml = '<div class="payment-log">' + session.payments.map(function (p, pi) {
+      return '<div class="plog-row"><span>' + formatDateShortID(isoToLocalDateStr(p.date)) + '</span><span>' + formatRupiah(p.amount) + ' <i class="fas fa-xmark" style="margin-left:8px;cursor:pointer;color:var(--brick);" onclick="deletePayment(' + session.id + ',' + pi + ')"></i></span></div>';
     }).join('') + '</div>';
   }
 
-  const stampHtml = isLunas ? '<div class="stamp-lunas"><span>LUNAS<br>' + formatDateShortID(session.tanggal) + '</span></div>' : '';
+  const stampHtml = isLunas ? '<div class="stamp-lunas"><span>LUNAS<br>' + formatDateShortID(session.lunasDate || session.tanggal) + '</span></div>' : '';
 
   let actionButtons = '';
   if (!compact) {
     if (!isLunas) {
       actionButtons = '<button class="btn-bayar" onclick="openPaymentModal(' + session.id + ')"><i class="fas fa-hand-holding-dollar"></i>Bayar</button><button class="btn-lunas" onclick="markLunas(' + session.id + ')"><i class="fas fa-stamp"></i>Lunas</button>';
     }
-    actionButtons += '<button class="btn-unduh" onclick="downloadBon(' + session.id + ')"><i class="fas fa-download"></i>Unduh</button>';
+    actionButtons += '<button class="btn-unduh" onclick="downloadBon(' + session.id + ')"><i class="fas fa-download"></i>Unduh</button><button class="btn-hapus" onclick="deleteSession(' + session.id + ')" aria-label="Hapus bon"><i class="fas fa-trash"></i></button>';
   }
 
-  return '<div class="session-card">' + stampHtml +
-    '<div class="session-header" onclick="toggleSessionCard(this)"><div><div class="vendor-name"><i class="fas fa-store"></i>' + session.vendor + '</div><div class="session-date">' + formatDateID(session.tanggal) + '</div></div><div class="session-header-right"><span class="status-badge ' + (isLunas ? 'lunas' : 'active') + '">' + (isLunas ? 'Lunas' : 'Aktif') + '</span>' + (compact ? '' : '<i class="fas fa-chevron-down session-chevron"></i>') + '</div></div>' +
+  return '<div class="session-card' + (!compact && expandedSessions.has(session.id) ? ' expanded' : '') + '" data-sid="' + session.id + '">' + stampHtml +
+    '<div class="session-header" onclick="toggleSessionCard(this)"><div><div class="vendor-name"><i class="fas fa-store"></i>' + escapeHtml(session.vendor) + '</div><div class="session-date">' + formatDateID(session.tanggal) + '</div></div><div class="session-header-right"><span class="status-badge ' + (isLunas ? 'lunas' : 'active') + '">' + (isLunas ? 'Lunas' : 'Aktif') + '</span>' + (compact ? '' : '<i class="fas fa-chevron-down session-chevron"></i>') + '</div></div>' +
     (compact ? '<div class="session-items">' + itemsHtml + '</div><div class="session-footer">' +
     '<div class="footer-item"><div class="label">Total</div><div class="value">' + formatRupiah(session.total) + '</div></div>' +
     '<div class="footer-item"><div class="label">DP</div><div class="value">' + formatRupiah(session.dp || 0) + '</div></div>' +
@@ -1604,6 +1729,8 @@ function toggleSessionCard(headerEl) {
   const card = headerEl.closest('.session-card');
   if (!card.querySelector('.session-body')) return;
   card.classList.toggle('expanded');
+  const sid = Number(card.dataset.sid);
+  if (card.classList.contains('expanded')) expandedSessions.add(sid); else expandedSessions.delete(sid);
 }
 
 // ---------- Payment ----------
@@ -1624,13 +1751,16 @@ async function processPayment() {
   const amount = parseFloat(numpadBuffer) || 0;
   if (amount <= 0) { showNotification('Masukkan jumlah pembayaran yang valid!', 'error'); return; }
   const session = sessions.find(function (s) { return s.id === currentPaymentSessionId; });
-  if (!session) return;
+  if (!session) { closePaymentModal(); showNotification('Sesi tidak ditemukan (mungkin sudah dihapus)', 'error'); renderAll(); return; }
+  const paidBefore = (session.payments || []).reduce(function (s, p) { return s + p.amount; }, 0);
+  const remainingBefore = Math.max(0, session.sisa - paidBefore);
+  if (amount > remainingBefore) { showNotification('Pembayaran melebihi sisa tagihan (' + formatRupiah(remainingBefore) + ')!', 'error'); return; }
   session.payments = session.payments || [];
   session.payments.push({ amount: amount, date: new Date().toISOString() });
   session.lastUpdate = new Date().toISOString();
   const paid = session.payments.reduce(function (s, p) { return s + p.amount; }, 0);
   const wasLunas = paid >= session.sisa;
-  if (wasLunas) session.status = 'lunas';
+  if (wasLunas) { session.status = 'lunas'; session.lunasDate = localDateStr(); }
   showLoader();
   try {
     await syncSessionToSupabase(session);
@@ -1655,6 +1785,7 @@ async function markLunas(sessionId) {
   const ok = await showConfirm({ title: 'Tandai Lunas?', message: message, icon: 'fa-stamp', okText: 'Ya, Tandai Lunas', danger: remaining > 0 });
   if (!ok) return;
   if (remaining > 0) session.sisa = paid;
+  session.lunasDate = localDateStr();
   session.status = 'lunas';
   session.lastUpdate = new Date().toISOString();
   showLoader();
@@ -1665,6 +1796,49 @@ async function markLunas(sessionId) {
     showNotification('Sesi ditandai LUNAS!', 'success');
     renderAll();
   } catch (e) { showNotification('Gagal menandai lunas!', 'error'); }
+  finally { hideLoader(); }
+}
+
+// ---------- Hapus pembayaran / hapus bon ----------
+async function deletePayment(sessionId, idx) {
+  const session = sessions.find(function (s) { return s.id === sessionId; });
+  if (!session || !session.payments || !session.payments[idx]) return;
+  const p = session.payments[idx];
+  const ok = await showConfirm({ title: 'Hapus Pembayaran?', message: 'Pembayaran ' + formatRupiah(p.amount) + ' akan dihapus dan sisa tagihan dihitung ulang.', okText: 'Ya, Hapus' });
+  if (!ok) return;
+  const paidAfter = session.payments.reduce(function (s, x) { return s + x.amount; }, 0) - p.amount;
+  const reopen = paidAfter < session.sisa;
+  if (reopen && session.status === 'lunas' && sessions.some(function (s) { return s.vendor === session.vendor && s.id !== session.id && s.status !== 'lunas'; })) {
+    showNotification('Vendor ini sudah punya sesi aktif lain — tidak bisa membuka kembali sesi lunas', 'error');
+    return;
+  }
+  session.payments.splice(idx, 1);
+  session.lastUpdate = new Date().toISOString();
+  if (reopen) { session.status = 'active'; delete session.lunasDate; }
+  showLoader();
+  try {
+    await syncSessionToSupabase(session);
+    haptic();
+    showNotification('Pembayaran dihapus', 'success');
+    renderAll();
+  } catch (e) { showNotification('Gagal menghapus pembayaran!', 'error'); }
+  finally { hideLoader(); }
+}
+async function deleteSession(sessionId) {
+  const session = sessions.find(function (s) { return s.id === sessionId; });
+  if (!session) return;
+  const ok = await showConfirm({ title: 'Hapus Bon?', message: 'Bon ' + session.vendor + ' beserta semua item dan pembayarannya akan dihapus permanen.', okText: 'Ya, Hapus' });
+  if (!ok) return;
+  showLoader();
+  try {
+    await writeSessionDelete(sessionId, true);
+    sessions = sessions.filter(function (s) { return s.id !== sessionId; });
+    expandedSessions.delete(sessionId);
+    itemSuggestPool = null;
+    haptic();
+    showNotification('Bon dihapus', 'success');
+    renderAll();
+  } catch (e) { showNotification('Gagal menghapus bon!', 'error'); }
   finally { hideLoader(); }
 }
 
@@ -1688,20 +1862,21 @@ function renderVendorTab() {
   container.innerHTML = list.map(function (v) {
     const balance = vendorRunningBalance(v);
     const count = sessions.filter(function (s) { return s.vendor === v; }).length;
-    return '<div class="vendor-row" onclick="openVendorDetail(\'' + v.replace(/'/g, "\\'") + '\')">' +
-      '<div class="vendor-avatar">' + v.charAt(0).toUpperCase() + '</div>' +
-      '<div class="vendor-info"><div class="vname">' + v + '</div><div class="vmeta">' + count + ' total bon</div></div>' +
+    return '<div class="vendor-row" data-v="' + escapeHtml(v) + '" onclick="openVendorDetail(this.dataset.v)">' +
+      '<div class="vendor-avatar">' + escapeHtml(v.charAt(0).toUpperCase()) + '</div>' +
+      '<div class="vendor-info"><div class="vname">' + escapeHtml(v) + '</div><div class="vmeta">' + count + ' total bon</div></div>' +
       '<div class="vendor-balance"><div class="vb-amount' + (balance <= 0 ? ' zero' : '') + '">' + formatRupiah(balance) + '</div><div class="vb-label">' + (balance <= 0 ? 'lunas' : 'hutang') + '</div></div>' +
-      '<button class="vendor-del-btn" onclick="event.stopPropagation();deleteVendor(\'' + v.replace(/'/g, "\\'") + '\')"><i class="fas fa-trash"></i></button>' +
+      '<button class="vendor-del-btn" onclick="event.stopPropagation();deleteVendor(this.closest(\'.vendor-row\').dataset.v)"><i class="fas fa-trash"></i></button>' +
       '</div>';
   }).join('');
 }
 function openVendorDetail(nama) {
+  currentVendorDetail = nama;
   const list = sessions.filter(function (s) { return s.vendor === nama; });
-  document.getElementById('vendorDetailTitle').innerHTML = '<i class="fas fa-store"></i>' + nama;
+  document.getElementById('vendorDetailTitle').innerHTML = '<i class="fas fa-store"></i>' + escapeHtml(nama);
   const balance = vendorRunningBalance(nama);
   let html = '<div class="summary-box grand" style="margin-bottom:16px;"><div class="label">Total Piutang Berjalan</div><div class="value">' + formatRupiah(balance) + '</div></div>';
-  html += '<button class="btn-primary" style="margin-bottom:16px;" onclick="closeVendorDetail();switchTabNav(\'buat\');document.getElementById(\'vendorInput\').value=\'' + nama.replace(/'/g, "\\'") + '\';checkActiveSessionForCurrentVendor();"><i class="fas fa-plus"></i> Catat Transaksi Baru</button>';
+  html += '<button class="btn-primary" style="margin-bottom:16px;" onclick="startBonForVendor(currentVendorDetail)"><i class="fas fa-plus"></i> Catat Transaksi Baru</button>';
   if (!list.length) html += '<div class="empty-state"><i class="fas fa-receipt"></i><p>Belum ada riwayat</p></div>';
   else html += list.map(function (s) { return sessionCardHTML(s, false); }).join('');
   document.getElementById('vendorDetailBody').innerHTML = html;
@@ -1731,6 +1906,8 @@ async function addNewVendor() {
   finally { hideLoader(); }
 }
 async function deleteVendor(nama) {
+  const bal = vendorRunningBalance(nama);
+  if (bal > 0) { showNotification('Vendor masih punya hutang ' + formatRupiah(bal) + ' — lunasi dulu sebelum dihapus', 'error'); return; }
   const ok = await showConfirm({ title: 'Hapus Vendor?', message: 'Vendor "' + nama + '" akan dihapus dari daftar. Riwayat bon yang sudah ada tetap tersimpan.', okText: 'Ya, Hapus' });
   if (!ok) return;
   showLoader();
@@ -1752,11 +1929,12 @@ async function downloadBon(sessionId) {
   const paid = (session.payments || []).reduce(function (s, p) { return s + p.amount; }, 0);
   const remaining = Math.max(0, session.sisa - paid);
   const preview = document.getElementById('bonPreview');
+  const rek = getRekening();
   preview.style.cssText = 'position:absolute;left:-9999px;top:0;width:360px;background:#fff;';
 
   const itemsHtml = (session.items || []).map(function (item) {
     return '<tr>' +
-      '<td style="padding:7px 5px;font-size:9.5px;line-height:1.3;color:#22304A;font-weight:600;border-bottom:1px solid #eee;">' + item.nama + '</td>' +
+      '<td style="padding:7px 5px;font-size:9.5px;line-height:1.3;color:#22304A;font-weight:600;border-bottom:1px solid #eee;">' + escapeHtml(item.nama) + '</td>' +
       '<td style="padding:7px 4px;font-size:9px;text-align:center;color:#888;border-bottom:1px solid #eee;white-space:nowrap;">' + item.qty + ' ' + (item.satuan || '') + '</td>' +
       '<td style="padding:7px 4px;font-size:9px;text-align:right;color:#888;border-bottom:1px solid #eee;white-space:nowrap;">' + formatRupiah(item.harga) + '</td>' +
       '<td style="padding:7px 5px;font-size:9.5px;text-align:right;color:#22304A;font-weight:700;border-bottom:1px solid #eee;white-space:nowrap;">' + formatRupiah(item.subtotal) + '</td>' +
@@ -1771,7 +1949,7 @@ async function downloadBon(sessionId) {
     '<div style="margin:-24px 16px 0;background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.12);padding:18px 16px;position:relative;">' +
     (session.status === 'lunas' ? '<div style="position:absolute;top:12px;right:14px;width:64px;height:64px;border:3px solid #A43B33;border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(-13deg);"><span style="font-family:monospace;font-weight:800;color:#A43B33;font-size:10px;">LUNAS</span></div>' : '') +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
-    '<div><div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Vendor</div><div style="font-size:13px;color:#22304A;font-weight:800;">' + session.vendor + '</div></div>' +
+    '<div><div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Vendor</div><div style="font-size:13px;color:#22304A;font-weight:800;">' + escapeHtml(session.vendor) + '</div></div>' +
     '<div style="text-align:right;"><div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Tanggal</div><div style="font-size:11.5px;color:#22304A;font-weight:600;">' + formatDateID(session.tanggal) + '</div></div>' +
     '</div>' +
     '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
@@ -1781,20 +1959,18 @@ async function downloadBon(sessionId) {
     '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ddd;">' +
     '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Total</span><span style="font-weight:700;color:#22304A;">' + formatRupiah(session.total) + '</span></div>' +
     '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>DP</span><span style="font-weight:700;color:#3C7A5C;">' + formatRupiah(session.dp) + '</span></div>' +
-    (session.pinjaman > 0 ?
-      '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Pinjaman</span><span style="font-weight:700;color:#A43B33;">' + formatRupiah(session.pinjaman) + '</span></div>' +
-      '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Sudah Dibayar</span><span style="font-weight:700;color:#22304A;">' + formatRupiah(paid) + '</span></div>'
-      : '') +
+    (session.pinjaman > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Pinjaman</span><span style="font-weight:700;color:#A43B33;">' + formatRupiah(session.pinjaman) + '</span></div>' : '') +
+    (paid > 0 ? '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11.5px;color:#666;"><span>Sudah Dibayar</span><span style="font-weight:700;color:#22304A;">' + formatRupiah(paid) + '</span></div>' : '') +
     '</div>' +
     '<div style="margin-top:10px;background:linear-gradient(135deg,#22304A,#16233B);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">' +
     '<span style="color:rgba(255,255,255,0.85);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Sisa Tagihan</span>' +
     '<span style="color:#fff;font-size:16px;font-weight:800;">' + formatRupiah(remaining) + '</span></div>' +
     '</div>' +
-    '<div style="margin-top:10px;border:1px dashed #C1892F;border-radius:10px;padding:10px 14px;background:rgba(193,137,47,0.06);">' +
+    (rek.info ? '<div style="margin-top:10px;border:1px dashed #C1892F;border-radius:10px;padding:10px 14px;background:rgba(193,137,47,0.06);">' +
     '<div style="font-size:9px;color:#8a611f;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:4px;"><i class="fas fa-money-bill-transfer"></i> Transfer Pembayaran</div>' +
-    '<div style="font-size:13px;color:#22304A;font-weight:800;letter-spacing:0.3px;">BCA 5140250521</div>' +
-    '<div style="font-size:11px;color:#666;font-weight:600;margin-top:1px;">a.n. ANDRI YANTO</div>' +
-    '</div>' +
+    '<div style="font-size:13px;color:#22304A;font-weight:800;letter-spacing:0.3px;">' + escapeHtml(rek.info) + '</div>' +
+    '<div style="font-size:11px;color:#666;font-weight:600;margin-top:1px;">a.n. ' + escapeHtml(rek.name) + '</div>' +
+    '</div>' : '') +
     '<div style="text-align:center;margin:16px 0 4px;font-size:10px;color:#bbb;">Dicetak ' + new Date().toLocaleString('id-ID') + '</div>' +
     '<div style="text-align:center;margin:0 0 20px;padding-top:10px;">' +
     '<div style="font-size:9px;color:#c4c4c4;letter-spacing:0.5px;margin-bottom:4px;">Dibuat dengan BonKu</div>' +
@@ -1886,8 +2062,17 @@ async function resetAllData() {
   if (!ok2) return;
   showLoader();
   try {
-    for (const s of sessions) { await supabaseClient.from('bonku_sessions').delete().eq('id', s.id); }
-    for (const v of vendors) { await writeVendorDelete(v, false).catch(function () {}); }
+    const ids = sessions.map(function (s) { return s.id; });
+    for (let i = 0; i < ids.length; i += 100) {
+      const r1 = await supabaseClient.from('bonku_sessions').delete().in('id', ids.slice(i, i + 100));
+      if (r1.error) throw r1.error;
+    }
+    for (let i = 0; i < vendors.length; i += 100) {
+      const r2 = await supabaseClient.from('bonku_vendors').delete().in('nama', vendors.slice(i, i + 100));
+      if (r2.error) throw r2.error;
+    }
+    setPendingQueue([]);
+    try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
     sessions = []; vendors = []; itemSuggestPool = null;
     renderAll();
     showNotification('Semua data berhasil dihapus!', 'success');
